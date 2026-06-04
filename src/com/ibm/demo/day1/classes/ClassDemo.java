@@ -10,6 +10,7 @@ public class ClassDemo {
 		obj.name = "Sonu";
 //		obj.salary = 10.75;
 		System.out.println(obj.toString());
+		System.out.println(Employee.officePhone);
 		
 		Employee obj2 = new Employee();
 		System.out.println(obj2.toString());
