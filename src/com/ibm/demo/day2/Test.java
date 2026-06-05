@@ -4,8 +4,8 @@ public class Test {
 
 	public static void main(String[] args) {
 
-		Integer i = 127;
-		Integer j = 127;
+		Integer i = 200;
+		Integer j = 200;
 		System.out.println(i == j);
 		System.out.println(i.equals(j));
 
@@ -15,7 +15,6 @@ public class Test {
 		System.out.println(k.equals(l));
 
 	}
-
 }
 
 

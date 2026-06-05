@@ -1,15 +1,21 @@
 package com.ibm.demo.day2.oop;
 
 /**
- * Encapsulation - bind data and code 
+ * Encapsulation - bind data and code together
  * 
- * Inheritance - access properties of super types 
+ *  - make fields private, and create public getters and setters 
  * 
- * AbstractionDemo - minimum necessary representation == 
+ * Inheritance - access properties of super types
  * 
- * - hide unnecessary details 
+ * AbstractionDemo - minimum necessary representation ==
  * 
- * Polymorphism - methods with the same name behave differently 
+ * - hide unnecessary details
+ * 
+ * Polymorphism - methods with the same name behave differently
+ * 
+ * Method overloading 
+ * 
+ * Method overriding 
  * 
  */
 
