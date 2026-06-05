@@ -1,0 +1,16 @@
+package com.ibm.demo.day2.strings;
+
+public class StringDemo {
+	
+	public static void main(String[] args) {
+		
+		String str = "abcdef";
+		System.out.println(str);
+		System.out.println(str.length());
+		System.out.println(str.charAt(0));
+		System.out.println(str.concat(str));
+		System.out.println(String.valueOf(10 == 10));
+//		String.
+		
+	}
+}
