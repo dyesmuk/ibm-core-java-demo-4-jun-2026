@@ -17,6 +17,15 @@ public class InheritanceDemo {
 		phone3.call();
 		phone3.sms();
 		phone3.music();
+		phone3.camera();
+		
+		BasicPhone phone4 = new SmartPhone();
+		phone4.call();
+		phone4.sms();
+//		phone4.music(); // CE 
+//		phone4.camera(); // CE 
+//		advantages ? 
+
 		
 	}
 

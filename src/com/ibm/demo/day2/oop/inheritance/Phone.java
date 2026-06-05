@@ -29,6 +29,10 @@ class SmartPhone extends FeaturePhone {
 	public void music() {
 		System.out.println("playing dolby...");
 	}
+	
+	public void camera() {
+		System.out.println("clicking...");
+	}
 
 }
 

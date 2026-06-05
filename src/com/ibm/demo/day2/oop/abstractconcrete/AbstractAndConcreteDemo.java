@@ -13,6 +13,9 @@ public class AbstractAndConcreteDemo {
 		bank2.payInterest();
 		bank2.checkNationality();
 		
+		Rbi bank3 = new HdfcBank();
+		bank3.doKyc();
+		
 	}
 
 }
