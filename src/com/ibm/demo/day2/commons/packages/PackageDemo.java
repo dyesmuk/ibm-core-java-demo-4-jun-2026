@@ -1,4 +1,4 @@
-package com.ibm.demo.day2.packages;
+package com.ibm.demo.day2.commons.packages;
 
 import java.util.Random;
 import java.util.Scanner;

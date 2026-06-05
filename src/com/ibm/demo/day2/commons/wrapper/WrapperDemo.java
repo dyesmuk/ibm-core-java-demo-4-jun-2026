@@ -1,4 +1,4 @@
-package com.ibm.demo.day2.wrapper;
+package com.ibm.demo.day2.commons.wrapper;
 
 import java.util.Scanner;
 

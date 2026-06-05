@@ -1,4 +1,4 @@
-package com.ibm.demo.day2.strings;
+package com.ibm.demo.day2.commons.strings;
 
 public class StringDemo {
 	

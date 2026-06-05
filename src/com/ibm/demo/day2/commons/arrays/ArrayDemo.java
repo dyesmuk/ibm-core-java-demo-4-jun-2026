@@ -1,4 +1,4 @@
-package com.ibm.demo.day2.arrays;
+package com.ibm.demo.day2.commons.arrays;
 
 import java.util.Arrays;
 

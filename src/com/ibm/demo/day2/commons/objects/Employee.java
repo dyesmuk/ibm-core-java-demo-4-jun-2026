@@ -1,4 +1,4 @@
-package com.ibm.demo.day2.objects;
+package com.ibm.demo.day2.commons.objects;
 
 import java.util.Objects;
 
