@@ -27,6 +27,9 @@ public class InnerDemo {
 		
 //		Option 3 - use lambda - 
 		
+//		Calc calc3 = ;
+//		calc3.addNums(10, 20);
+		
 		
 	}
 
