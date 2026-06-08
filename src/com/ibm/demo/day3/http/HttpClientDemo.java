@@ -20,6 +20,7 @@ public class HttpClientDemo {
 
 		System.out.println(response.statusCode());
 		System.out.println(response.body());
+		System.out.println(response.headers());
 		
 
 	}
