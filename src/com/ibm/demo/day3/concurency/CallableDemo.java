@@ -1,4 +1,4 @@
-package com.ibm.demo.day3.consurrency;
+package com.ibm.demo.day3.concurency;
 
 import java.util.concurrent.*;
 
