@@ -2,7 +2,7 @@ package com.ibm.demo.day3.threads;
 
 public class MultiThread extends Thread {
 
-	public int num = 1;
+	public int num;
 
 	@Override
 	public void run() {

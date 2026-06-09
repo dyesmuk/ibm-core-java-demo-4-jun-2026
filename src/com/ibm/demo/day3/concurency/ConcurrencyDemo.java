@@ -1,12 +1,16 @@
 package com.ibm.demo.day3.concurency;
 
-import java.util.concurrent.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class ConcurrencyDemo {
 
 	public static void main(String[] args) throws Exception {
-
 
 		Callable<Integer> sumTask = () -> {
 			int sum = 0;
@@ -21,7 +25,7 @@ public class ConcurrencyDemo {
 
 		// Submit multiple tasks, collect futures
 		List<Future<Integer>> futures = new ArrayList<>();
-		
+
 		for (int i = 0; i < 5; i++) {
 			futures.add(pool.submit(sumTask));
 		}
