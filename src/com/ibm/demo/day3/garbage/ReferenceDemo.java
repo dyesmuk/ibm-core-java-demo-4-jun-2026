@@ -12,7 +12,6 @@ public class ReferenceDemo {
 		// ─── 1. Strong Reference ───────────────────────────────────────────
 		String name = new String("Hello");
 		System.out.println("Strong ref: " + name);
-
 		name = null; // now eligible for GC
 		System.gc();
 		System.out.println("Strong ref set to null → object may be collected\n");
