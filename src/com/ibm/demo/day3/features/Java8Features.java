@@ -21,6 +21,16 @@ public class Java8Features {
 
 		List<String> names = List.of("Sonu", "Monu", "Tonu", "Ponu");
 
+//		 option 1 
+		names.forEach((name) -> {
+			System.out.println(name);
+		});
+//		option 2 
+		names.forEach(name -> System.out.println(name));
+//		option 3 - method reference 
+		
+		names.forEach(System.out::println);
+
 		names.stream().filter(n -> n.startsWith("A")).forEach(System.out::println);
 
 		// map()
@@ -42,6 +52,7 @@ public class Java8Features {
 		// Optional
 
 		Optional<String> name = Optional.of("Sonu");
+//		name.
 
 		name.ifPresent(System.out::println);
 
@@ -49,11 +60,12 @@ public class Java8Features {
 
 		// forEach + Method Reference
 
-		names.forEach(System.out::println);
+//		names.forEach(System.out::println);
 
 		// Date Time API
 
 		LocalDate today = LocalDate.now();
+//		today.
 
 		LocalDate birthday = LocalDate.of(1990, 5, 15);
 
