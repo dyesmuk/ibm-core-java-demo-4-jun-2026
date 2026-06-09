@@ -1,62 +1,120 @@
 package com.ibm.demo.day3.features;
 
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDate;
+import java.time.Period;
+import java.util.*;
+import java.util.function.BinaryOperator;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class Java8Features {
 
-//	Lambda Expressions
-//	Anonymous functions — write inline code without boilerplate anonymous classes.
+	public static void main(String[] args) {
 
-	// Before
-	Runnable r1=new Runnable(){public void run(){System.out.println("Hi");}};
+		// Lambda Expression
 
-	// After
-	Runnable r2 = () -> System.out.println("Hi");
-//	Stream API
-//	Functional-style operations on collections — filter, map, reduce, etc.
+		Runnable r = () -> System.out.println("Hi from Lambda");
 
-	List<String> names1 = List.of("Alice", "Bob", "Anna");
-	
-	names.stream().filter(n->n.startsWith("A")).forEach(System.out::println); // Alice, Anna
-	
-//	Optional<T>
-//	A container that may or may not hold a value — avoids NullPointerException.
+		r.run();
 
-	Optional<String> name = Optional.of("Alice");name.ifPresent(System.out::println); // Alice
-	
-	String val = name.orElse("Unknown"); // "Alice"
+		// Stream API
 
-	//	Default Methods
-//	Interfaces can
-//	now have
-//	method implementations
-//	using the default keyword.
+		List<String> names = List.of("Sonu", "Monu", "Tonu", "Ponu");
 
-	interface Greeter {
-		default void greet() {
-			System.out.println("Hello!");
-		}
+		names.stream().filter(n -> n.startsWith("A")).forEach(System.out::println);
+
+		// map()
+
+		List<String> upper = names.stream().map(String::toUpperCase).collect(Collectors.toList());
+
+		System.out.println(upper);
+
+		// sorted()
+
+		names.stream().sorted().forEach(System.out::println);
+
+		// count()
+
+		long count = names.stream().filter(n -> n.startsWith("A")).count();
+
+		System.out.println(count);
+
+		// Optional
+
+		Optional<String> name = Optional.of("Sonu");
+
+		name.ifPresent(System.out::println);
+
+		System.out.println(name.orElse("Unknown"));
+
+		// forEach + Method Reference
+
+		names.forEach(System.out::println);
+
+		// Date Time API
+
+		LocalDate today = LocalDate.now();
+
+		LocalDate birthday = LocalDate.of(1990, 5, 15);
+
+		Period age = Period.between(birthday, today);
+
+		System.out.println(age.getYears());
+
+		// Default Method
+
+		MyGreeter g = new MyGreeter();
+
+		g.greet();
+
+		// Functional Interface
+
+		Calculator c = (a, b) -> a + b;
+
+		System.out.println(c.add(10, 20));
+
+		// Predicate
+
+		List<Integer> nums = List.of(10, 15, 20, 25);
+
+		nums.stream().filter(n -> n % 2 == 0).forEach(System.out::println);
+
+		// Consumer
+
+		names.forEach(n -> System.out.println("Hello " + n));
+
+		// Supplier
+
+		Supplier<String> s = () -> "Java 8";
+
+		System.out.println(s.get());
+
+		// Binary Operator
+
+		BinaryOperator<Integer> bo = (a, b) -> a * b;
+
+		System.out.println(bo.apply(5, 6));
 	}
+}
 
-	class MyGreeter implements Greeter {
-	} // inherits greet()
+// Default Method Example
 
-//	New Date/
-//	Time API Immutable,thread-safe date/
-//	time classes
-//	replacing the
-//	old Date/Calendar.
+interface Greeter {
 
-	LocalDate today = LocalDate.now(); // 2026-06-08
-	LocalDate birthday = LocalDate.of(1990, 5, 15);
-	Period age = Period.between(birthday, today);System.out.println(age.getYears()); // 36
-	Method References Shorthand for
-	lambdas that
-	just call
-	an existing
-	method.
+	default void greet() {
 
-			List<String> names = List.of("Bob", "Alice");names.forEach(System.out::println); // :: references a method
+		System.out.println("Hello!");
+	}
+}
 
+class MyGreeter implements Greeter {
+
+}
+
+// Functional Interface Example
+
+@FunctionalInterface
+interface Calculator {
+
+	int add(int a, int b);
 }
