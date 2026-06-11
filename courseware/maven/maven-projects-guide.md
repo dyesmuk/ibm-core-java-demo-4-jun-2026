@@ -17,8 +17,7 @@
 
 # Part 2 — Running Projects Using Command Prompt
 5. Running Maven Web Application
-6. Running Multi Module Project
-7. Running Organized Multi Module Project
+6. Running Organized Multi Module Project
 
 # Part 3 — Running Projects in Eclipse
 8. Importing Maven Projects into Eclipse
@@ -326,66 +325,11 @@ Hello World from Maven Web Application
 
 ---
 
-# 6. Running Multi Module Project
 
-## Project Name
-
-```text
-multi-module-hello
-```
 
 ---
 
-## Step 1 — Extract ZIP
-
-```text
-multi-module-hello.zip
-```
-
----
-
-## Step 2 — Open Command Prompt
-
-Go to parent folder:
-
-```bash
-cd multi-module-hello
-```
-
----
-
-## Step 3 — Build Project
-
-```bash
-mvn clean install
-```
-
-Maven automatically builds:
-
-```text
-common-module
-web-module
-```
-
----
-
-## Step 4 — Run Main Class
-
-Run:
-
-```text
-web-module/src/main/java/com/demo/web/App.java
-```
-
-Expected output:
-
-```text
-Hello from Common Module
-```
-
----
-
-# 7. Running Organized Multi Module Project
+# 6. Running Organized Multi Module Project
 
 ## Project Name
 
@@ -484,27 +428,9 @@ Alt + F5
 
 ---
 
-# 9. Running Multi Module Projects in Eclipse
+# 9. Running Organized Multi Module Project in Eclipse
 
-## Run multi-module-hello
 
-Open:
-
-```text
-web-module/src/main/java/com/demo/web/App.java
-```
-
-Right click:
-
-```text
-Run As → Java Application
-```
-
-Expected output:
-
-```text
-Hello from Common Module
-```
 
 ---
 
