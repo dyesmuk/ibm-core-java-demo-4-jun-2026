@@ -949,6 +949,58 @@ Commands:    mvn clean install     ← builds everything
 
 ---
 
+### ❓ FAQs — Real Questions from Real Developers
+
+**Q: Is this a Maven project or a Spring Boot project?**
+> Both — and that's totally fine! Spring Boot is a *framework* (it handles your app logic). Maven is a *build tool* (it compiles, manages dependencies, and packages your app). A Spring Boot project almost always *uses* Maven (or Gradle) to build itself. Think of it like: Spring Boot is the car, Maven is the factory that assembles it.
+
+---
+
+**Q: How is Maven different from a Node.js project?**
+> Very similar concept, different ecosystem:
+>
+> | | Maven (Java) | npm (Node.js) |
+> |---|---|---|
+> | Config file | `pom.xml` | `package.json` |
+> | Dependency store | `~/.m2/repository` | `node_modules/` |
+> | Install deps | `mvn install` | `npm install` |
+> | Run build | `mvn package` | `npm run build` |
+> | Registry | Maven Central | npmjs.com |
+>
+> If you've used npm, you already understand Maven's job — just different syntax and language.
+
+---
+
+**Q: Do I need Maven if I use Spring Initializr?**
+> Spring Initializr (start.spring.io) *generates* a Maven project for you — it writes the `pom.xml`. You still need Maven installed to build and run it. Initializr is just a shortcut to get started; Maven does the actual work.
+
+---
+
+**Q: What's the difference between `mvn install` and `mvn package`?**
+> `mvn package` builds your JAR/WAR and puts it in the `target/` folder. `mvn install` does everything `package` does, *plus* copies the output to your local `.m2` repository. Use `install` when other local projects depend on this one; use `package` when you just want the build output.
+
+---
+
+**Q: Why does Maven download the internet on first run?**
+> It's not the whole internet — just your declared dependencies (and *their* dependencies). Maven fetches them once and caches in `.m2/`. Subsequent builds are fast. That first build on a new machine though... grab a coffee. ☕
+
+---
+
+**Q: Can two dependencies conflict with each other?**
+> Yes — this is called a **dependency conflict** (two libraries need different versions of the same transitive dependency). Maven resolves it using "nearest wins" — the version closest to your project in the dependency tree wins. Use `mvn dependency:tree` to spot conflicts and add an explicit version in your pom to override.
+
+---
+
+**Q: Should I commit the `.m2` folder to Git?**
+> **No.** Never commit `.m2/`. Add it to `.gitignore`. It's a local cache and can be hundreds of MBs. Anyone who clones your repo runs `mvn install` and Maven rebuilds it. What you *do* commit is `pom.xml` — that's the single source of truth.
+
+---
+
+**Q: Maven or Gradle — which should I learn?**
+> For enterprise Java and Spring Boot — Maven is more common and has better documentation. For Android and newer Kotlin-based projects — Gradle. If you're going into a Java backend role, Maven first is the right call. The concepts transfer easily to Gradle later.
+
+---
+
 > **Pro tip:** When stuck, `mvn help:effective-pom` shows you the final merged POM — parent + child + defaults. It's like X-Ray vision for Maven. 🔍
 
 ---
