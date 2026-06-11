@@ -358,7 +358,7 @@ cd organized-multi-module-hello
 ## Step 3 — Build Entire Project
 
 ```bash
-mvn clean install
+mvn clean package
 ```
 
 Modules build in sequence:
@@ -376,7 +376,7 @@ common
 Run:
 
 ```text
-api/src/main/java/com/demo/api/App.java
+java -cp "common\target\classes;service\target\classes;api\target\classes" com.demo.api.App
 ```
 
 Expected output:
