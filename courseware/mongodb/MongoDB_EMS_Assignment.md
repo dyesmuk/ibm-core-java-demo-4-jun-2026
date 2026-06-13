@@ -1,5 +1,5 @@
 # 🗃️ MongoDB Assessment — Employee Management System
-### DevSecOps Training | IBM
+### Database Training | IBM
 
 > **Scenario:** You are the backend database engineer for an HR platform. The system manages employees, departments, job roles, and projects across a mid-sized organisation. Your job is to build, query, update, and maintain this database using MongoDB — covering every fundamental operation and data pattern the platform depends on.
 
