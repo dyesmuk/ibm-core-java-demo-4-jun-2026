@@ -1,4 +1,4 @@
-# 🗃️ MongoDB Assessment — Employee Management System
+# 🗃️ MongoDB Assignment — Employee Management System
 ### Database Training | IBM
 
 > **Scenario:** You are the backend database engineer for an HR platform. The system manages employees, departments, job roles, and projects across a mid-sized organisation. Your job is to build, query, update, and maintain this database using MongoDB — covering every fundamental operation and data pattern the platform depends on.
@@ -1352,4 +1352,4 @@ db.employees.distinct("address.city")
 
 ---
 
-*Assessment prepared for IBM DevSecOps Training — For Training Purposes Only*
+*Assignment prepared for IBM Database Training — For Training Purposes Only*
