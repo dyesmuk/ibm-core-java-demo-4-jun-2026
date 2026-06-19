@@ -1,17 +1,19 @@
 # Cloud Full Stack — 7 Week Training Schedule
 
-**Duration:** 04-Jun-2026 to 22-Jul-2026 (35 working days, Mon–Fri)
-**Hours:** 9:00 AM – 5:00 PM | **Breaks:** 11:00–11:15 AM, 1:00–2:00 PM (lunch), 3:45–4:00 PM
-**Format:** 100% hands-on — no separate theory/practical split
+Welcome to the Cloud Full Stack training program! This document is your complete day-by-day guide for the next 7 weeks — what we'll cover, when, and in how much detail.
 
-## Overview
+**Duration:** 04-Jun-2026 to 22-Jul-2026 (35 working days, Monday–Friday)
+**Timings:** 9:00 AM – 5:00 PM
+**Breaks:** 11:00–11:15 AM | 1:00–2:00 PM (Lunch) | 3:45–4:00 PM
+**Format:** Fully hands-on — every session is practical, no separate theory-only blocks
 
-- This follows your original Sheet 2 day allocations and durations as-is.
-- **One ordering fix applied:** Git & GitHub was originally scheduled on Day 28 (right before the course ended), which meant trainees had no formal version control instruction for the first 27 days of hands-on work. It has been moved to **Day 4**, immediately after Core Java, alongside Clean Code. Day 28 now covers Docker + Kubernetes only.
-- All other topic ordering in your original schedule was checked and is sound: Maven before Spring Framework before Spring Boot (build tool needed first), JavaScript before Node.js before TypeScript before React/Angular (JS fundamentals → Node/npm ecosystem → typed frontend frameworks), Docker/Kubernetes before the capstone (which requires containerizing the final app).
-- 30-minute MCQ assessments are embedded at the end of the last day of each major topic: **Core Java, Spring Framework, Spring Boot, Node.js, React, Angular, and DevOps** (Docker/Kubernetes/Ansible/CI-CD) — no extra days added for these.
-- 4 days (Day 30–33) are reserved for self-paced study of additional topics, as in your original plan.
-- Last 2 days (Day 34–35) are the capstone project (Full Stack Development using Spring Boot, Angular and React), as in your original plan.
+## What to Expect
+
+- We move from fundamentals to full stack: **Core Java → Git/GitHub → MongoDB → Spring → Microservices → JavaScript/Node.js → TypeScript → React → Angular → DevOps (Docker, Kubernetes, Ansible, CI/CD)**, finishing with a hands-on capstone project.
+- A short **30-minute MCQ assessment** is held at the end of each major module (Core Java, Spring Framework, Spring Boot, Node.js, React, Angular, DevOps) to check understanding before moving on.
+- **4 days** are set aside for self-paced study of additional topics — use this time to revisit anything you found tough, or go deeper on areas that interest you.
+- The final **2 days** are a capstone project where you'll build and deploy a full stack application using Spring Boot, Angular, and React.
+- Git & GitHub is taught early (Day 4) so you can use version control for all your hands-on work from the very start of the program.
 
 ---
 
@@ -22,17 +24,17 @@
 | 1 | 04-Jun-2026 | Thursday | Core Java | Foundation programming, OOP |
 | 2 | 05-Jun-2026 | Friday | Core Java | Continue Core Java |
 | 3 | 08-Jun-2026 | Monday | Core Java | Java wrap-up, Assessment — MCQ Assessment: Core Java |
-| 4 | 09-Jun-2026 | Tuesday | Clean Code learning material for Java Foudation Level, Git and GitHub | Clean Code + Git & GitHub (moved here from Day 28, immediately after Core Java) |
+| 4 | 09-Jun-2026 | Tuesday | Clean Code learning material for Java Foudation Level, Git and GitHub | Clean Code + Git & GitHub |
 | 5 | 10-Jun-2026 | Wednesday | MongoDB | NoSQL database fundamentals |
 | 6 | 11-Jun-2026 | Thursday | Maven, Spring Framework | Build tool + Spring Core, DI, AOP, MVC, Assessment — MCQ Assessment: Spring Framework |
-| 7 | 12-Jun-2026 | Friday | Spring Boot | Spring Boot, JPA, REST, Security, Assessment — MCQ Assessment: Spring Boot |
-| 8 | 15-Jun-2026 | Monday | REST APIs using Spring Data REST | Spring Data REST in depth |
-| 9 | 16-Jun-2026 | Tuesday | REST APIs using Spring Data REST | Spring Data REST in depth (continued) |
-| 10 | 17-Jun-2026 | Wednesday | Microservices Software Architecture: Patterns and Techniques | Microservices patterns, fault tolerance |
-| 11 | 18-Jun-2026 | Thursday | HTML & CSS | HTML/CSS revision |
-| 12 | 19-Jun-2026 | Friday | JavaScript | JS fundamentals |
-| 13 | 22-Jun-2026 | Monday | Node.js | Node.js modules, file system, async |
-| 14 | 23-Jun-2026 | Tuesday | Node.js | Node.js continued |
+| 7 | 12-Jun-2026 | Friday | Spring Boot | Spring Boot basics, JPA, REST CRUD |
+| 8 | 15-Jun-2026 | Monday | Spring Boot | Spring Security, Caching, Batch, JMS, Testing, Assessment — MCQ Assessment: Spring Boot |
+| 9 | 16-Jun-2026 | Tuesday | REST APIs using Spring Data REST | Spring Data REST in depth |
+| 10 | 17-Jun-2026 | Wednesday | REST APIs using Spring Data REST | Spring Data REST in depth (continued) |
+| 11 | 18-Jun-2026 | Thursday | Microservices Software Architecture: Patterns and Techniques | Microservices patterns, fault tolerance |
+| 12 | 19-Jun-2026 | Friday | HTML & CSS | HTML/CSS revision |
+| 13 | 22-Jun-2026 | Monday | JavaScript | JS fundamentals |
+| 14 | 23-Jun-2026 | Tuesday | Node.js | Node.js modules, file system, async |
 | 15 | 24-Jun-2026 | Wednesday | Node.js | Node.js REST APIs, Mongoose, auth |
 | 16 | 25-Jun-2026 | Thursday | Node.js | Node.js sockets, testing, Assessment — MCQ Assessment: Node.js |
 | 17 | 26-Jun-2026 | Friday | Express | Express framework + REST API project |
@@ -46,7 +48,7 @@
 | 25 | 08-Jul-2026 | Wednesday | Angular | Angular services, routing |
 | 26 | 09-Jul-2026 | Thursday | Angular | Angular observables, forms |
 | 27 | 10-Jul-2026 | Friday | Angular | Angular HTTP, auth, Assessment — MCQ Assessment: Angular |
-| 28 | 13-Jul-2026 | Monday | Docker, Kubernetes | Containerization + orchestration (Git & GitHub moved to Day 4) |
+| 28 | 13-Jul-2026 | Monday | Docker, Kubernetes | Containerization + orchestration |
 | 29 | 14-Jul-2026 | Tuesday | Ansible, CI/CD with Jenkins Ansible Docker Kubernetes | Automation + CI/CD pipeline, Assessment — MCQ Assessment: DevOps (Docker/K8s/Ansible/CI-CD) |
 | 30 | 15-Jul-2026 | Wednesday | Additional topics (self-study) | Trainee self-study |
 | 31 | 16-Jul-2026 | Thursday | Additional topics (self-study) | Trainee self-study |
@@ -59,7 +61,7 @@
 
 ## Detailed Daily Plan
 
-Each day below is broken down to the nearest 10–15 minute block, drawn directly from the course content list. Breaks, lunch, and assessment slots are marked inline.
+Here's the minute-by-minute breakdown for every day, so you always know what's coming up next.
 
 ### Day 1 — Thu 04-Jun-2026
 *Core Java*
@@ -217,30 +219,42 @@ Each day below is broken down to the nearest 10–15 minute block, drawn directl
 
 | Time | Duration | Topic | Activity / Sub-topic |
 |---|---|---|---|
-| 9:00 AM-9:20 AM | 20 min | Spring Boot | Introduction |
-| 9:20 AM-9:40 AM | 20 min | Spring Boot | Software Setup |
-| 9:40 AM-10:00 AM | 20 min | Spring Boot | Basics |
-| 10:00 AM-10:20 AM | 20 min | Spring Boot | First Project |
-| 10:20 AM-10:40 AM | 20 min | Spring Boot | Spring Data JPA |
-| 10:40 AM-11:00 AM | 20 min | Spring Boot | Create REST CRUD API |
+| 9:00 AM-9:40 AM | 40 min | Spring Boot | Introduction |
+| 9:40 AM-10:20 AM | 40 min | Spring Boot | Software Setup |
+| 10:20 AM-11:00 AM | 40 min | Spring Boot | Basics |
 | 11:00 AM-11:15 AM | 15 min | Break | Short break |
-| 11:15 AM-11:35 AM | 20 min | Spring Boot | Creating a REST Client |
-| 11:35 AM-11:55 AM | 20 min | Spring Boot | Profiles |
-| 11:55 AM-12:15 PM | 20 min | Spring Boot | Logging |
-| 12:15 PM-12:35 PM | 20 min | Spring Boot | Health Checks and Metrics |
-| 12:35 PM-12:55 PM | 20 min | Spring Boot | Spring Security |
+| 11:15 AM-12:00 PM | 45 min | Spring Boot | First Project |
+| 12:00 PM-12:45 PM | 45 min | Spring Boot | Spring Data JPA |
+| 12:45 PM-1:00 PM | 15 min | Spring Boot | Create REST CRUD API (contd. next block) |
 | 1:00 PM-2:00 PM | 60 min | Lunch | Lunch break |
-| 2:00 PM-2:20 PM | 20 min | Spring Boot | Thymeleaf |
-| 2:20 PM-2:40 PM | 20 min | Spring Boot | Database Caching |
-| 2:40 PM-3:00 PM | 20 min | Spring Boot | Spring Batch |
-| 3:00 PM-3:20 PM | 20 min | Spring Boot | Unit Testing using MockMvc |
-| 3:20 PM-3:40 PM | 20 min | Spring Boot | Messaging and Spring JMS |
+| 2:00 PM-2:45 PM | 45 min | Spring Boot | Create REST CRUD API |
+| 2:45 PM-3:30 PM | 45 min | Spring Boot | Creating a REST Client |
+| 3:30 PM-3:45 PM | 15 min | Spring Boot | Profiles (contd. next block) |
 | 3:45 PM-4:00 PM | 15 min | Break | Short break |
-| 4:00 PM-4:20 PM | 20 min | Spring Boot | Swagger REST Documentation Quickstart |
-| 4:20 PM-4:30 PM | 10 min | Spring Boot | Validations (contd. next block) |
-| 4:30 PM-5:00 PM | 30 min | Assessment | MCQ Test (30 min) - Spring Boot |
+| 4:00 PM-4:45 PM | 45 min | Spring Boot | Profiles |
+| 4:45 PM-5:00 PM | 15 min | Spring Boot | Logging (contd. next block) |
 
 ### Day 8 — Mon 15-Jun-2026
+*Spring Boot*
+
+| Time | Duration | Topic | Activity / Sub-topic |
+|---|---|---|---|
+| 9:00 AM-9:40 AM | 40 min | Spring Boot | Health Checks and Metrics |
+| 9:40 AM-10:20 AM | 40 min | Spring Boot | Spring Security |
+| 10:20 AM-11:00 AM | 40 min | Spring Boot | Thymeleaf |
+| 11:00 AM-11:15 AM | 15 min | Break | Short break |
+| 11:15 AM-11:55 AM | 40 min | Spring Boot | Database Caching |
+| 11:55 AM-12:35 PM | 40 min | Spring Boot | Spring Batch |
+| 12:35 PM-1:00 PM | 25 min | Spring Boot | Unit Testing using MockMvc (contd. next block) |
+| 1:00 PM-2:00 PM | 60 min | Lunch | Lunch break |
+| 2:00 PM-2:40 PM | 40 min | Spring Boot | Unit Testing using MockMvc |
+| 2:40 PM-3:20 PM | 40 min | Spring Boot | Messaging and Spring JMS |
+| 3:20 PM-3:45 PM | 25 min | Spring Boot | Swagger REST Documentation Quickstart (contd. next block) |
+| 3:45 PM-4:00 PM | 15 min | Break | Short break |
+| 4:00 PM-4:30 PM | 30 min | Spring Boot | Swagger REST Documentation Quickstart (contd. next block) |
+| 4:30 PM-5:00 PM | 30 min | Assessment | MCQ Test (30 min) - Spring Boot |
+
+### Day 9 — Tue 16-Jun-2026
 *REST APIs using Spring Data REST*
 
 | Time | Duration | Topic | Activity / Sub-topic |
@@ -256,7 +270,7 @@ Each day below is broken down to the nearest 10–15 minute block, drawn directl
 | 3:45 PM-4:00 PM | 15 min | Break | Short break |
 | 4:00 PM-4:55 PM | 55 min | REST APIs using Spring Data REST | Spring Data REST In Action |
 
-### Day 9 — Tue 16-Jun-2026
+### Day 10 — Wed 17-Jun-2026
 *REST APIs using Spring Data REST*
 
 | Time | Duration | Topic | Activity / Sub-topic |
@@ -272,7 +286,7 @@ Each day below is broken down to the nearest 10–15 minute block, drawn directl
 | 3:45 PM-4:00 PM | 15 min | Break | Short break |
 | 4:00 PM-5:00 PM | 60 min | REST APIs using Spring Data REST | Create Custom Controller Methods (contd. next block) |
 
-### Day 10 — Wed 17-Jun-2026
+### Day 11 — Thu 18-Jun-2026
 *Microservices Software Architecture: Patterns and Techniques*
 
 | Time | Duration | Topic | Activity / Sub-topic |
@@ -288,7 +302,7 @@ Each day below is broken down to the nearest 10–15 minute block, drawn directl
 | 3:45 PM-4:00 PM | 15 min | Break | Short break |
 | 4:00 PM-5:00 PM | 60 min | Microservices Software Architecture: Patterns and Techniques | Data (contd. next block) |
 
-### Day 11 — Thu 18-Jun-2026
+### Day 12 — Fri 19-Jun-2026
 *HTML & CSS*
 
 | Time | Duration | Topic | Activity / Sub-topic |
@@ -335,7 +349,7 @@ Each day below is broken down to the nearest 10–15 minute block, drawn directl
 | 4:40 PM-4:50 PM | 10 min | HTML & CSS | Styling Links |
 | 4:50 PM-5:00 PM | 10 min | HTML & CSS | Block & Inline Elements |
 
-### Day 12 — Fri 19-Jun-2026
+### Day 13 — Mon 22-Jun-2026
 *JavaScript*
 
 | Time | Duration | Topic | Activity / Sub-topic |
@@ -351,68 +365,53 @@ Each day below is broken down to the nearest 10–15 minute block, drawn directl
 | 3:45 PM-4:00 PM | 15 min | Break | Short break |
 | 4:00 PM-5:00 PM | 60 min | JavaScript | Objects (contd. next block) |
 
-### Day 13 — Mon 22-Jun-2026
-*Node.js*
-
-| Time | Duration | Topic | Activity / Sub-topic |
-|---|---|---|---|
-| 9:00 AM-10:35 AM | 95 min | Node.js | Welcome |
-| 10:35 AM-11:00 AM | 25 min | Node.js | Installing and Exploring Node.js (contd. next block) |
-| 11:00 AM-11:15 AM | 15 min | Break | Short break |
-| 11:15 AM-12:50 PM | 95 min | Node.js | Installing and Exploring Node.js |
-| 12:50 PM-1:00 PM | 10 min | Node.js | Node.js Module System (Notes App) (contd. next block) |
-| 1:00 PM-2:00 PM | 60 min | Lunch | Lunch break |
-| 2:00 PM-3:40 PM | 100 min | Node.js | Node.js Module System (Notes App) |
-| 3:45 PM-4:00 PM | 15 min | Break | Short break |
-| 4:00 PM-5:00 PM | 60 min | Node.js | File System and Command Line Args (Notes App) (contd. next block) |
-
 ### Day 14 — Tue 23-Jun-2026
 *Node.js*
 
 | Time | Duration | Topic | Activity / Sub-topic |
 |---|---|---|---|
-| 9:00 AM-10:15 AM | 75 min | Node.js | Debugging Node.js (Notes Apps) |
-| 10:15 AM-11:00 AM | 45 min | Node.js | Asynchronous Node.js (Weather App) (contd. next block) |
+| 9:00 AM-10:05 AM | 65 min | Node.js | Welcome |
+| 10:05 AM-11:00 AM | 55 min | Node.js | Installing and Exploring Node.js (contd. next block) |
 | 11:00 AM-11:15 AM | 15 min | Break | Short break |
-| 11:15 AM-12:30 PM | 75 min | Node.js | Asynchronous Node.js (Weather App) |
-| 12:30 PM-1:00 PM | 30 min | Node.js | Web Servers (Weather App) (contd. next block) |
+| 11:15 AM-12:20 PM | 65 min | Node.js | Installing and Exploring Node.js |
+| 12:20 PM-1:00 PM | 40 min | Node.js | Node.js Module System (Notes App) (contd. next block) |
 | 1:00 PM-2:00 PM | 60 min | Lunch | Lunch break |
-| 2:00 PM-3:20 PM | 80 min | Node.js | Web Servers (Weather App) |
-| 3:20 PM-3:45 PM | 25 min | Node.js | Accessing API from Browser (Weather App) (contd. next block) |
+| 2:00 PM-3:05 PM | 65 min | Node.js | Node.js Module System (Notes App) |
+| 3:05 PM-3:45 PM | 40 min | Node.js | File System and Command Line Args (Notes App) (contd. next block) |
 | 3:45 PM-4:00 PM | 15 min | Break | Short break |
-| 4:00 PM-5:00 PM | 60 min | Node.js | Accessing API from Browser (Weather App) (contd. next block) |
+| 4:00 PM-5:00 PM | 60 min | Node.js | File System and Command Line Args (Notes App) (contd. next block) |
 
 ### Day 15 — Wed 24-Jun-2026
 *Node.js*
 
 | Time | Duration | Topic | Activity / Sub-topic |
 |---|---|---|---|
-| 9:00 AM-10:15 AM | 75 min | Node.js | MongoDB and Promises (Task App) |
-| 10:15 AM-11:00 AM | 45 min | Node.js | REST APIs and Mongoose (Task App) (contd. next block) |
+| 9:00 AM-10:05 AM | 65 min | Node.js | Web Servers (Weather App) |
+| 10:05 AM-11:00 AM | 55 min | Node.js | Accessing API from Browser (Weather App) (contd. next block) |
 | 11:00 AM-11:15 AM | 15 min | Break | Short break |
-| 11:15 AM-12:30 PM | 75 min | Node.js | REST APIs and Mongoose (Task App) |
-| 12:30 PM-1:00 PM | 30 min | Node.js | API Authentication and Security (Task App) (contd. next block) |
+| 11:15 AM-12:20 PM | 65 min | Node.js | Accessing API from Browser (Weather App) |
+| 12:20 PM-1:00 PM | 40 min | Node.js | Application Deployment (Weather App) (contd. next block) |
 | 1:00 PM-2:00 PM | 60 min | Lunch | Lunch break |
-| 2:00 PM-3:20 PM | 80 min | Node.js | API Authentication and Security (Task App) |
-| 3:20 PM-3:45 PM | 25 min | Node.js | Sorting, Pagination, and Filtering (Task App) (contd. next block) |
+| 2:00 PM-3:05 PM | 65 min | Node.js | Application Deployment (Weather App) |
+| 3:05 PM-3:45 PM | 40 min | Node.js | MongoDB and Promises (Task App) (contd. next block) |
 | 3:45 PM-4:00 PM | 15 min | Break | Short break |
-| 4:00 PM-5:00 PM | 60 min | Node.js | Sorting, Pagination, and Filtering (Task App) (contd. next block) |
+| 4:00 PM-5:00 PM | 60 min | Node.js | MongoDB and Promises (Task App) (contd. next block) |
 
 ### Day 16 — Thu 25-Jun-2026
 *Node.js*
 
 | Time | Duration | Topic | Activity / Sub-topic |
 |---|---|---|---|
-| 9:00 AM-10:30 AM | 90 min | Node.js | Sending Emails (Task App) |
-| 10:30 AM-11:00 AM | 30 min | Node.js | Testing Node.js (Task App) (contd. next block) |
+| 9:00 AM-10:00 AM | 60 min | Node.js | Sorting, Pagination, and Filtering (Task App) |
+| 10:00 AM-11:00 AM | 60 min | Node.js | File Uploads (Task App) |
 | 11:00 AM-11:15 AM | 15 min | Break | Short break |
-| 11:15 AM-12:45 PM | 90 min | Node.js | Testing Node.js (Task App) |
-| 12:45 PM-1:00 PM | 15 min | Node.js | Real-Time Web Applications with Socket.io (Chat App) (contd. next block) |
+| 11:15 AM-12:15 PM | 60 min | Node.js | Sending Emails (Task App) |
+| 12:15 PM-1:00 PM | 45 min | Node.js | Testing Node.js (Task App) (contd. next block) |
 | 1:00 PM-2:00 PM | 60 min | Lunch | Lunch break |
-| 2:00 PM-3:30 PM | 90 min | Node.js | Real-Time Web Applications with Socket.io (Chat App) |
-| 3:30 PM-3:45 PM | 15 min | Node.js | Wrapping Up (contd. next block) |
+| 2:00 PM-3:00 PM | 60 min | Node.js | Testing Node.js (Task App) |
+| 3:00 PM-3:45 PM | 45 min | Node.js | Real-Time Web Applications with Socket.io (Chat App) (contd. next block) |
 | 3:45 PM-4:00 PM | 15 min | Break | Short break |
-| 4:00 PM-4:30 PM | 30 min | Node.js | Wrapping Up (contd. next block) |
+| 4:00 PM-4:30 PM | 30 min | Node.js | Real-Time Web Applications with Socket.io (Chat App) (contd. next block) |
 | 4:30 PM-5:00 PM | 30 min | Assessment | MCQ Test (30 min) - Node.js |
 
 ### Day 17 — Fri 26-Jun-2026
@@ -744,12 +743,11 @@ Each day below is broken down to the nearest 10–15 minute block, drawn directl
 
 ---
 
-## Notes & Assumptions
+## A Few Tips
 
-| Item | Details |
-|---|---|
-| Window | 35 working days, Mon-Fri, 4-Jun-2026 to 22-Jul-2026. Daily hours 9:00 AM-5:00 PM with breaks 11:00-11:15, 1:00-2:00 (lunch), 3:45-4:00. Net work time/day = 6.5 hours (390 min). |
-| Basis | Day allocations and topic durations follow your original Sheet 2 schedule exactly — no topic was given more or fewer days than you'd already planned. |
-| Only change made | Git & GitHub moved from Day 28 to Day 4 (right after Core Java, alongside Clean Code), since trainees need version control from early on for all subsequent hands-on labs. Day 28 now covers Docker + Kubernetes only. |
-| Assessments | 30-minute MCQ test embedded at the end of the last day of each major topic (Core Java, Spring Framework, Spring Boot, Node.js, React, Angular, DevOps) — no separate day used. |
-| Order check — result | All other topic sequencing in your original schedule is sound and was left untouched: Maven → Spring Framework → Spring Boot; JavaScript → Node.js → TypeScript → React/Angular; Docker/Kubernetes before the capstone. |
+- Keep your GitHub repo updated daily — it's also how your work will be reviewed.
+- Use the self-study days (Day 30–33) to strengthen any topic you found difficult earlier in the program.
+- The capstone (Day 34–35) brings together Spring Boot, Angular, and React — the stronger your fundamentals from earlier weeks, the smoother this will go.
+- Questions during the day are always welcome — don't wait till the assessment to find gaps.
+
+All the best for the program!
