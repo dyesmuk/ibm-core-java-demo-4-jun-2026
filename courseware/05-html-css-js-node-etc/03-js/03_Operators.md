@@ -1,27 +1,28 @@
-# JS Basics — Module 03: Operators
+# JavaScript Courseware — Module 03: Operators
+
+---
 
 ## 3.1 Arithmetic Operators
 
 ```javascript
-// Standard arithmetic
 10 + 3    // 13
 10 - 3    // 7
 10 * 3    // 30
 10 / 3    // 3.3333...  (no integer division — always floating point)
-10 % 3    // 1  (remainder)
-2 ** 10   // 1024  (exponentiation — ES2016)
+10 % 3    // 1  (remainder — same as Java)
+2 ** 10   // 1024  (exponentiation, ES2016 — Java uses Math.pow)
 
-// Integer division workaround (like Java's int division)
-Math.floor(10 / 3)    // 3
-Math.trunc(10 / 3)    // 3  (truncates toward zero, not floor)
+// Integer division workaround
+Math.floor(10 / 3)    // 3  (rounds toward -Infinity)
+Math.trunc(10 / 3)    // 3  (truncates toward zero)
 Math.trunc(-7 / 2)    // -3  (floor would give -4)
 
-// Increment / Decrement
+// Increment / Decrement (same as Java)
 let i = 5;
-i++;         // post-increment: returns 5, then i becomes 6
-++i;         // pre-increment: i becomes 7, returns 7
-i--;         // post-decrement: returns 7, then i becomes 6
---i;         // pre-decrement: i becomes 5, returns 5
+i++;    // post-increment: use 5, then i becomes 6
+++i;    // pre-increment: i becomes 7, then use 7
+i--;    // post-decrement: use 7, then i becomes 6
+--i;    // pre-decrement: i becomes 5, then use 5
 
 // Compound assignment
 let x = 10;
@@ -33,22 +34,20 @@ x **= 2;   // x = 36
 x %= 10;   // x = 6
 ```
 
-### Floating-Point Precision (Java Developers Take Note)
+### Floating-Point Precision — Know This
 
 ```javascript
-0.1 + 0.2    // 0.30000000000000004  — NOT 0.3
-0.1 + 0.2 === 0.3   // false!
+0.1 + 0.2    // 0.30000000000000004  — NOT 0.3!
+0.1 + 0.2 === 0.3   // false
 
-// This is IEEE 754 floating-point arithmetic — same in Java, Python, etc.
-// Fix: use toFixed or round when displaying
-(0.1 + 0.2).toFixed(2)    // "0.30" (string)
-Math.round((0.1 + 0.2) * 100) / 100  // 0.3 (number)
+// This is IEEE 754 double-precision — same in Java, Python, C
+// Fix for display:
+(0.1 + 0.2).toFixed(2)   // "0.30" (returns a string)
 
-// For financial calculations: multiply to integers, compute, then divide
-const price1 = 0.10;  // $0.10
-const price2 = 0.20;  // $0.20
-const total = (Math.round(price1 * 100) + Math.round(price2 * 100)) / 100;
-// 0.30  ✅
+// Fix for financial calculations: work in integers (cents, paise)
+const price1 = 10;   // paise
+const price2 = 20;   // paise
+const total = (price1 + price2) / 100;  // ₹0.30  ✅
 ```
 
 ---
@@ -56,140 +55,128 @@ const total = (Math.round(price1 * 100) + Math.round(price2 * 100)) / 100;
 ## 3.2 Comparison Operators
 
 ```javascript
-// Equality (always use ===)
+// Always use === and !==
 5 === 5           // true
 5 === "5"         // false  (different types)
-null === null     // true
-NaN === NaN       // false  (special case!)
+NaN === NaN       // false  (NaN is never equal to anything, including itself)
 
-// Inequality (always use !==)
 5 !== 10          // true
 5 !== "5"         // true
 
-// Relational
-5 > 3             // true
-5 >= 5            // true
-3 < 5             // true
-3 <= 3            // true
+// Relational (same as Java)
+5 > 3    // true
+5 >= 5   // true
+3 < 5    // true
+3 <= 3   // true
 
-// String comparison (lexicographic)
-"apple" < "banana"  // true  (a < b)
-"b" > "a"           // true
-"10" > "9"          // false  (because "1" < "9" lexicographically)
-10 > 9              // true   (use numbers for numeric comparison)
-
-// Comparing with null/undefined
-null > 0     // false
-null == 0    // false  (special rule: null only == undefined)
-null >= 0    // true   (!) — comparing null numerically converts it to 0
-undefined > 0   // false
-undefined < 0   // false
-undefined == 0  // false
-// Summary: avoid relational comparisons with null/undefined — use explicit checks
+// String comparison (lexicographic — like Java)
+"apple" < "banana"  // true  ('a' < 'b')
+"10" > "9"          // false ← because "1" < "9" lexicographically
+10 > 9              // true  ← use numbers for numeric comparison
 ```
 
 ---
 
 ## 3.3 Logical Operators
 
-```javascript
-// && (AND) — returns first falsy value or last value
-true && true     // true
-true && false    // false
-"hello" && 42    // 42      (both truthy, returns last)
-null && "hello"  // null    (first is falsy, short-circuits)
-0 && "hello"     // 0       (0 is falsy, short-circuits)
+### Short-Circuit Behaviour — Very Important in JS
 
-// || (OR) — returns first truthy value or last value
-true || false    // true
-false || "hello" // "hello" (returns first truthy)
-null || "default" // "default"
+Unlike Java where `&&` and `||` return booleans, **in JavaScript they return one of their operands**:
+
+```javascript
+// && — returns the FIRST falsy value, or the LAST value if all are truthy
+true && true       // true
+true && false      // false
+"hello" && 42      // 42      (both truthy — returns last)
+null && "hello"    // null    (first is falsy — short-circuits, returns null)
+0 && "hello"       // 0       (0 is falsy)
+
+// || — returns the FIRST truthy value, or the LAST value if all are falsy
+true || false      // true
+false || "hello"   // "hello" (returns first truthy)
+null || "default"  // "default"
+0 || 42            // 42
 
 // ! (NOT)
 !true    // false
 !false   // true
-!0       // true  (0 is falsy)
-!""      // true
-!!"hello"  // true  (double negation for boolean conversion)
+!0       // true
+!!"hi"   // true  (double negation = convert to boolean)
+```
 
-// Short-circuit evaluation (very common in JS)
+### Short-Circuit for Guard Checks
+
+```javascript
 const user = null;
-const name = user && user.name;    // null  (doesn't crash accessing user.name)
-const display = name || 'Guest';   // 'Guest'
+const name = user && user.name;  // null — doesn't crash accessing user.name
+const port = process.env.PORT || 3000;  // default port
 
-// Default parameter pattern (pre-ES6)
-function greet(name) {
-  name = name || 'Guest';   // if name is falsy, use 'Guest'
-  return `Hello, ${name}`;
-}
-// Problem: greet("") returns 'Hello, Guest' — empty string is falsy!
+// Problem with || for defaults: it triggers on ANY falsy value
+const count = 0;
+const display = count || 'No items';  // 'No items' — WRONG! 0 is valid
 ```
 
 ---
 
-## 3.4 Nullish Coalescing Operator `??` (ES2020)
+## 3.4 Nullish Coalescing `??` (ES2020) — Use This for Defaults
 
-`??` returns the right side only when the left side is **`null` or `undefined`** (not other falsy values):
+`??` returns the right side only when the left side is **`null` or `undefined`** — not other falsy values like `0` or `""`:
 
 ```javascript
-// || problem: treats all falsy values the same
-const count = 0;
-const display1 = count || 'No items';   // 'No items' — WRONG: 0 is a valid count
-
-// ?? solution: only null/undefined trigger the fallback
-const display2 = count ?? 'No items';   // 0  — CORRECT
-
-// More examples
 null ?? "default"       // "default"
 undefined ?? "default"  // "default"
-0 ?? "default"          // 0
-"" ?? "default"         // ""
-false ?? "default"      // false
+0 ?? "default"          // 0      ← 0 is valid, not replaced
+"" ?? "default"         // ""     ← empty string is valid
+false ?? "default"      // false  ← valid
 
-// Real-world usage
+// Compare with || (which triggers on ALL falsy)
+0 || "default"    // "default"  ← replaces 0 (probably a bug)
+0 ?? "default"    // 0          ← correctly keeps 0
+
+// Real-world config defaults
 function getConfig(userConfig) {
   return {
-    timeout: userConfig.timeout ?? 5000,   // default 5s, but 0 is valid
+    timeout: userConfig.timeout ?? 5000,  // 0 timeout is valid
     retries: userConfig.retries ?? 3,
-    debug: userConfig.debug ?? false       // explicitly setting false works
+    debug: userConfig.debug ?? false       // explicitly false is valid
   };
 }
 ```
 
+> **Rule:** Use `??` for defaults (not `||`) unless you specifically want to replace `0`, `""`, and `false` too.
+
 ---
 
-## 3.5 Optional Chaining `?.` (ES2020)
+## 3.5 Optional Chaining `?.` (ES2020) — No More Null Crashes
 
-Access nested properties without crashing when an intermediate value is `null`/`undefined`:
+Access nested properties safely without `null`/`undefined` crashes:
 
 ```javascript
 const user = {
   profile: {
-    address: {
-      city: 'Bengaluru'
-    }
+    address: { city: 'Bengaluru' }
   }
 };
 
-// Without optional chaining — verbose guard chain
+// Without optional chaining — verbose and ugly
 const city1 = user && user.profile && user.profile.address && user.profile.address.city;
 
 // With optional chaining — clean
 const city2 = user?.profile?.address?.city;    // 'Bengaluru'
 
-// When any part is null/undefined, returns undefined (no error)
+// When anything in the chain is null/undefined — returns undefined, no error
 const country = user?.profile?.address?.country;   // undefined
-const zip     = user?.settings?.zip;               // undefined (settings doesn't exist)
+const zip = user?.settings?.zip;                   // undefined (settings missing)
 
 // Optional chaining with method calls
-const upper = user?.getName?.();     // calls getName() if it exists, else undefined
+const upper = user?.getName?.();    // calls getName() only if it exists
 
-// Optional chaining with arrays
-const first = user?.roles?.[0];     // user.roles[0] if roles exists
+// Optional chaining with array/bracket access
+const firstRole = user?.roles?.[0];
 
-// Combine with ?? for defaults
-const city = user?.profile?.address?.city ?? 'Unknown';  // 'Bengaluru'
-const zip  = user?.profile?.address?.zip  ?? 'N/A';      // 'N/A'
+// Combine with ?? for clean defaults
+const city = user?.profile?.address?.city ?? 'Unknown';
+const zip  = user?.profile?.address?.zip  ?? 'N/A';
 ```
 
 ---
@@ -197,153 +184,163 @@ const zip  = user?.profile?.address?.zip  ?? 'N/A';      // 'N/A'
 ## 3.6 Ternary Operator
 
 ```javascript
-// condition ? valueIfTrue : valueIfFalse
 const age = 20;
 const status = age >= 18 ? 'Adult' : 'Minor';
 
-// Nested ternary (use sparingly — hard to read)
+// Chained ternary for grades (keep it readable)
 const grade = score >= 90 ? 'A' :
               score >= 80 ? 'B' :
               score >= 70 ? 'C' : 'F';
 
-// Common pattern: conditional JSX/class names
+// Common in JSX (React)
 const buttonClass = isLoading ? 'btn btn-disabled' : 'btn btn-primary';
-const icon = isOpen ? '▲' : '▼';
 ```
 
 ---
 
-## 3.7 Bitwise Operators (Rare, but Encountered)
+## 3.7 Spread Operator `...`
+
+Spread **expands** an iterable into individual elements:
 
 ```javascript
-// AND, OR, XOR, NOT, shift (same as Java)
-5 & 3    // 1   (101 & 011 = 001)
-5 | 3    // 7   (101 | 011 = 111)
-5 ^ 3    // 6   (101 ^ 011 = 110)
-~5       // -6  (bitwise NOT)
-5 << 1   // 10  (left shift)
-5 >> 1   // 2   (right shift with sign)
-5 >>> 1  // 2   (unsigned right shift)
-
-// Common practical use: fast floor for positive numbers
-~~3.9    // 3  (double bitwise NOT — faster than Math.floor for positive numbers)
-5 | 0    // 5  (bitwise OR 0 — coerces to 32-bit integer, truncates decimal)
-3.7 | 0  // 3  (truncates)
-```
-
----
-
-## 3.8 The `in` and `instanceof` Operators
-
-```javascript
-// in: checks if a property exists in an object (or its prototype)
-const car = { make: 'Toyota', model: 'Camry', year: 2020 };
-'make' in car       // true
-'horsepower' in car // false
-
-// Check array indices
-const arr = [10, 20, 30];
-0 in arr    // true  (index 0 exists)
-3 in arr    // false (index 3 doesn't exist)
-
-// instanceof: checks prototype chain (like Java's instanceof)
-[] instanceof Array           // true
-[] instanceof Object          // true  (arrays are objects)
-new Date() instanceof Date    // true
-function(){} instanceof Function  // true
-
-// Checking class instances
-class Animal {}
-class Dog extends Animal {}
-const dog = new Dog();
-dog instanceof Dog    // true
-dog instanceof Animal // true
-dog instanceof Object // true
-```
-
----
-
-## 3.9 Spread and Rest Operators
-
-```javascript
-// Spread (...): expands an iterable into individual elements
-
 // In function calls
-Math.max(...[1, 5, 3, 9, 2])   // 9  (without spread: Math.max([1,5,3]) = NaN)
+Math.max(...[1, 5, 3, 9, 2])   // 9
 
 // In array literals
 const a = [1, 2, 3];
 const b = [4, 5, 6];
-const combined = [...a, ...b];          // [1, 2, 3, 4, 5, 6]
+const combined = [...a, ...b];           // [1, 2, 3, 4, 5, 6]
 const withExtra = [0, ...a, 3.5, ...b]; // [0, 1, 2, 3, 3.5, 4, 5, 6]
 
-// Copying an array (shallow)
-const copy = [...a];  // [1, 2, 3] — new array, not a reference
+// Shallow copy of array
+const copy = [...a];   // [1, 2, 3] — new array, not a reference
 
-// In object literals
+// In object literals (merge / override)
 const base = { x: 1, y: 2 };
-const extended = { ...base, z: 3 };         // { x: 1, y: 2, z: 3 }
+const extended  = { ...base, z: 3 };        // { x: 1, y: 2, z: 3 }
 const overridden = { ...base, x: 99 };      // { x: 99, y: 2 }  (later key wins)
-const merged = { ...base, ...{ y: 10, z: 3 } };  // { x: 1, y: 10, z: 3 }
-
-// Rest (...): collects remaining arguments into an array
-function sum(...numbers) {        // rest parameter
-  return numbers.reduce((acc, n) => acc + n, 0);
-}
-sum(1, 2, 3, 4, 5)   // 15
-
-function first(a, b, ...rest) {
-  console.log(a);     // 1
-  console.log(b);     // 2
-  console.log(rest);  // [3, 4, 5]
-}
-first(1, 2, 3, 4, 5);
+const merged = { ...base, ...{ y: 10, z: 3 } }; // { x: 1, y: 10, z: 3 }
 ```
 
 ---
 
-## 3.10 Operator Precedence
+## 3.8 Rest Parameters `...`
 
-Like Java, operators have precedence. The full table is at MDN; key rules to remember:
+Rest **collects** remaining arguments into an array (same syntax `...`, different context):
+
+```javascript
+// In function parameters — collects remaining args
+function sum(...numbers) {
+  return numbers.reduce((acc, n) => acc + n, 0);
+}
+sum(1, 2, 3, 4, 5)  // 15
+
+function log(level, ...messages) {
+  console.log(`[${level}]`, ...messages);
+}
+log('INFO', 'Server', 'started', 'port 3000');
+// [INFO] Server started port 3000
+```
+
+> **How to tell spread vs rest apart:** Spread is in a **call** (expanding values out). Rest is in a **definition** (collecting values in).
+
+---
+
+## 3.9 Logical Assignment Operators (ES2021)
+
+Shorthand for common "assign if condition" patterns:
+
+```javascript
+// ||= : assign only if current value is falsy
+let name = '';
+name ||= 'Anonymous';   // name = 'Anonymous'
+
+let user = { name: 'Alice' };
+user.role ||= 'user';   // sets role only if not set or falsy
+
+// ??= : assign only if current value is null or undefined (preferred)
+let cache = null;
+cache ??= {};           // cache = {}
+
+user.profile ??= {};           // initialise if missing
+user.profile.bio ??= 'No bio'; // won't overwrite '' or false
+
+// &&= : assign only if current value is truthy
+let config = { debug: true };
+config.debug &&= false;   // only updates if debug was truthy
+```
+
+---
+
+## 3.10 `in` and `instanceof`
+
+```javascript
+// in: checks if a property exists in an object (including prototype chain)
+const car = { make: 'Toyota', model: 'Camry' };
+'make' in car        // true
+'horsepower' in car  // false
+
+// instanceof: checks prototype chain
+[] instanceof Array           // true
+[] instanceof Object          // true  (arrays are objects)
+new Date() instanceof Date    // true
+
+class Animal {}
+class Dog extends Animal {}
+const dog = new Dog();
+dog instanceof Dog     // true
+dog instanceof Animal  // true  (prototype chain)
+dog instanceof Object  // true
+```
+
+---
+
+## 3.11 Operator Precedence
+
+When in doubt, use parentheses. Key order to remember:
 
 ```
-High ←──────────────────────────────────────── Low
-  ()  →  **  →  !, ~, ++(unary)  →  *, /, %  →  +, -
-  →  <<, >>  →  <, <=, >, >=, in, instanceof
-  →  ==, !=, ===, !==  →  &&  →  ||  →  ??
-  →  ? :  →  =, +=, -=...  →  ,
+High ──────────────────────────────── Low
+  ()  →  **  →  !, ~, unary+/-
+  →  *, /, %
+  →  +, -
+  →  <, <=, >, >=, in, instanceof
+  →  ===, !==, ==, !=
+  →  &&
+  →  ||
+  →  ??
+  →  ? :
+  →  =, +=, -=...
 ```
 
 ```javascript
-// When in doubt, use parentheses for clarity
-2 + 3 * 4       // 14  (not 20 — * has higher precedence)
-(2 + 3) * 4     // 20
-
-null ?? undefined || 'default'    // ambiguous — use parens:
-(null ?? undefined) || 'default'  // 'default'
-
-// ?? and || cannot be mixed without parens (SyntaxError in modern JS)
+// Common pitfall: ?? and || cannot be mixed without parens
 a ?? b || c     // ❌ SyntaxError
 (a ?? b) || c   // ✅
 a ?? (b || c)   // ✅
+
+// Always use parens when mixing
+2 + 3 * 4       // 14 (not 20)
+(2 + 3) * 4     // 20
 ```
 
 ---
 
 ## Key Takeaways
 
-- Use `===` and `!==` always — `==` and `!=` perform unpredictable type coercion.
-- `??` (nullish coalescing) is safer than `||` for defaults — it only triggers on `null`/`undefined`.
-- `?.` (optional chaining) prevents crashes when accessing deeply nested properties.
-- Spread `...` creates shallow copies and merges arrays/objects.
-- Rest `...` collects function arguments into an array.
+- Use `===` and `!==` always — `==` and `!=` cause unpredictable coercion.
+- `??` is safer than `||` for defaults — it only triggers on `null`/`undefined`.
+- `?.` prevents crashes on null property access — essential for API data.
+- Spread `...` expands; Rest `...` collects. Same syntax, opposite jobs.
+- `??=` is cleaner than `value = value ?? default` for lazy initialisation.
 
 ---
 
 ## Self-Check Questions
 
-1. Why is `0.1 + 0.2 !== 0.3`? How do you work around this for currency calculations?
-2. What is the difference between `||` and `??` for providing default values?
-3. What does `user?.profile?.address?.city` return if `user.profile` is `null`?
-4. What is the difference between the spread and rest operators? (They look the same but behave differently — how do you tell them apart?)
-5. Write a function `getUsername(user)` that returns `user.profile.username` if it exists, or `'Anonymous'` if any part of the chain is null/undefined.
+1. What is the difference between `||` and `??` for providing default values? Give an example where `||` gives the wrong answer.
+2. What does `user?.profile?.address?.city` return if `user.profile` is `null`?
+3. What is the difference between spread and rest operators? Write one example of each.
+4. Why does `0.1 + 0.2 === 0.3` return `false`? How do you handle currency math?
+5. Write a one-liner function `getUsername(user)` that returns `user.profile.username` if it exists, or `'Anonymous'` if any part of the chain is null/undefined.
+6. What is `??=` useful for? Give a practical example.

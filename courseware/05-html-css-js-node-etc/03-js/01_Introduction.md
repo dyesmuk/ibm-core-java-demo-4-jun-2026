@@ -1,81 +1,82 @@
-# JS Basics — Module 01: Introduction to JavaScript
+# JavaScript Courseware — Module 01: Introduction to JavaScript
+
+> **Who is this for?** Java developers stepping into the JavaScript world as part of Full Stack development. You already know OOP, types, and how programs run — we'll use that to fast-track your JS understanding instead of starting from zero.
+
+---
 
 ## 1.1 What Is JavaScript?
 
-JavaScript is a **dynamic, interpreted, single-threaded, garbage-collected** programming language. It was created by Brendan Eich at Netscape in 10 days in 1995 — a fact that explains some of its quirks. It is the only language that runs natively in web browsers, and with Node.js it now runs on the server too.
+JavaScript is a **dynamic, interpreted, single-threaded, garbage-collected** programming language. It was created by Brendan Eich in 1995 in literally 10 days (yes, that explains some of the quirks). It is the **only language that runs natively in web browsers**, and with Node.js it now runs on the server too.
 
-### JavaScript vs Java — The Key Differences
+It has evolved massively. Modern JavaScript (ES2020+) is clean, powerful, and a joy to write — don't let the horror stories from 2005 scare you.
 
-As a Java developer, you will notice immediately that JavaScript is a fundamentally different kind of language. The name similarity is marketing, not lineage.
+---
+
+## 1.2 JavaScript vs Java — The Real Differences
+
+The name similarity is **marketing, not lineage**. They are fundamentally different languages.
 
 | Concept | Java | JavaScript |
-|---------|------|-----------|
+|---|---|---|
 | Type system | Static, strong | Dynamic, weak |
-| Typing | Explicit: `String name = "Alice"` | Inferred: `let name = "Alice"` |
-| Compilation | Compiled to bytecode (.class) | JIT-compiled at runtime |
+| Variable typing | `String name = "Alice"` | `let name = "Alice"` |
+| Compilation | Compiled → bytecode (.class) | JIT-compiled at runtime |
 | Concurrency | Multi-threaded (JVM threads) | Single-threaded + event loop |
-| OOP model | Class-based inheritance | Prototype-based (classes are syntactic sugar) |
-| `null` check | `NullPointerException` | `undefined`, `null` — two different "nothings" |
-| Entry point | `public static void main(String[] args)` | Top-level code runs immediately |
+| OOP model | Class-based inheritance | Prototype-based (classes are sugar) |
+| "Nothing" values | `null` only | `null` AND `undefined` (two kinds!) |
+| Entry point | `public static void main(...)` | Top-level code runs immediately |
 | Packages | `package com.example` | ES modules (`import`/`export`) |
-| Build tool | Maven/Gradle | npm/yarn/pnpm |
+| Build tool | Maven / Gradle | npm / yarn / pnpm |
 
 ### The Mental Model Shift
 
-In Java you think: *types first, behaviour through methods on classes.*
-In JavaScript you think: *functions first, objects are just dictionaries with optional prototypes.*
+In Java you think: *"types first, behaviour through methods on classes."*
 
-JavaScript rewards a functional style far more than Java does. You will frequently pass functions as arguments, return functions from functions, and compose behaviour from small units.
+In JavaScript you think: *"functions first — objects are just dictionaries that optionally have prototypes."*
+
+JavaScript rewards a **functional style** far more than Java does. You will frequently:
+- Pass functions as arguments (callbacks)
+- Return functions from functions (factories, closures)
+- Compose small functions into larger behaviours
 
 ---
 
-## 1.2 Where JavaScript Runs
+## 1.3 Where JavaScript Runs
 
 ```
-┌─────────────────────────────────────────┐
-│              JavaScript                  │
-├────────────────────┬────────────────────┤
-│   Browser (Client) │  Node.js (Server)  │
-│                    │                    │
-│  V8 engine         │  V8 engine         │
-│  DOM API           │  fs, http, path    │
-│  fetch, XHR        │  process, Buffer   │
-│  localStorage      │  npm ecosystem     │
-│  Web Workers       │  streams, events   │
-└────────────────────┴────────────────────┘
+┌──────────────────────────────────────────────┐
+│                  JavaScript                   │
+├──────────────────────┬───────────────────────┤
+│  Browser (Client)    │  Node.js (Server)      │
+│                      │                        │
+│  V8 engine           │  V8 engine             │
+│  DOM API             │  fs, http, path        │
+│  fetch, XHR          │  process, Buffer       │
+│  localStorage        │  npm ecosystem         │
+│  Web Workers         │  streams, events       │
+└──────────────────────┴───────────────────────┘
 ```
 
-The **V8 engine** (built by Google) is the same JavaScript engine in both Chrome and Node.js. Your language knowledge transfers completely — the difference is the APIs available.
+**Same V8 engine** (built by Google) powers both Chrome and Node.js. Your JavaScript knowledge transfers completely — the difference is only the available APIs.
+
+> **This courseware** focuses on core JavaScript that works everywhere. Node.js-specific APIs (file system, HTTP server, streams) are covered in the separate Node.js & Express courseware.
 
 ---
 
-## 1.3 The JavaScript Engine — How Code Runs
+## 1.4 ECMAScript — The Standard
 
-Unlike Java which compiles to bytecode up front, JavaScript is parsed and executed at runtime:
-
-1. **Parsing** — source code → AST (Abstract Syntax Tree)
-2. **Compilation** — AST → bytecode (V8 uses a baseline compiler)
-3. **Optimisation** — hot code paths are JIT-compiled to machine code
-4. **Execution** — runs on the event loop (covered in Module 08)
-
-This means JavaScript has no compilation step you manually trigger. Errors that Java would catch at compile time (type errors, missing properties) only appear at runtime in plain JavaScript. This is a primary motivation for TypeScript.
-
----
-
-## 1.4 ECMAScript and the Standard
-
-JavaScript's official standard is **ECMAScript (ES)**, maintained by ECMA International's TC39 committee. Versions you will see referenced:
+JavaScript's official standard is **ECMAScript (ES)**, maintained by ECMA International's TC39 committee.
 
 | Version | Year | Key Features |
-|---------|------|-------------|
-| ES5 | 2009 | `strict mode`, JSON, `Array.forEach` |
-| ES6 / ES2015 | 2015 | `let/const`, arrow functions, classes, Promises, modules, destructuring, template literals |
-| ES2017 | 2017 | `async/await` |
+|---|---|---|
+| ES5 | 2009 | `strict mode`, JSON support, `Array.forEach` |
+| **ES6 / ES2015** | 2015 | `let`/`const`, arrow functions, classes, Promises, modules, destructuring, template literals |
+| ES2017 | 2017 | `async`/`await` |
 | ES2020 | 2020 | Optional chaining `?.`, nullish coalescing `??`, `BigInt` |
-| ES2022 | 2022 | Class fields, `at()`, top-level `await` |
-| ES2023+ | ongoing | New array methods, `Symbol.iterator` improvements |
+| ES2022 | 2022 | Class fields, `at()`, top-level `await`, `structuredClone` |
+| ES2023+ | ongoing | New array methods (`toSorted`, `findLast`, etc.) |
 
-**Write ES2020+ code.** Node.js 20 LTS supports it fully. Browsers do too (with optional Babel transpilation for old browsers).
+**Write ES2020+ code.** Node.js 20 LTS supports it fully. Browsers do too.
 
 ---
 
@@ -83,7 +84,7 @@ JavaScript's official standard is **ECMAScript (ES)**, maintained by ECMA Intern
 
 ### Install Node.js
 
-Download the **LTS** version from [nodejs.org](https://nodejs.org). Verify:
+Download the **LTS** version from [nodejs.org](https://nodejs.org).
 
 ```bash
 node --version    # v20.x.x
@@ -94,7 +95,7 @@ npm --version     # 10.x.x
 
 ```javascript
 // hello.js
-const greeting = "Hello, World!";
+const greeting = "Hello, IBM!";
 console.log(greeting);
 
 const add = (a, b) => a + b;
@@ -103,13 +104,13 @@ console.log(add(2, 3));  // 5
 
 ```bash
 node hello.js
-# Hello, World!
+# Hello, IBM!
 # 5
 ```
 
 ### The Node.js REPL
 
-Like Java's `jshell`, Node has a REPL (Read-Eval-Print Loop):
+Like Java's `jshell`, Node.js has a REPL (Read-Eval-Print Loop) — great for quick experiments:
 
 ```bash
 node
@@ -117,7 +118,7 @@ node
 4
 > "Hello".toUpperCase()
 'HELLO'
-> [1,2,3].map(x => x * 2)
+> [1, 2, 3].map(x => x * 2)
 [ 2, 4, 6 ]
 > .exit
 ```
@@ -125,12 +126,12 @@ node
 ### VS Code Setup
 
 Install these extensions:
-- **ESLint** — linting
-- **Prettier** — formatting
-- **JavaScript (ES6) code snippets**
-- **Node.js Extension Pack**
+- **ESLint** — catches bugs and bad patterns
+- **Prettier** — auto-formats your code
+- **JavaScript (ES6) code snippets** — shortcuts
+- **Thunder Client** — API testing (REST client)
 
-Create a `.eslintrc.json` at your project root:
+Create `.eslintrc.json` at your project root:
 
 ```json
 {
@@ -146,72 +147,50 @@ Create a `.eslintrc.json` at your project root:
 
 ---
 
-## 1.6 JavaScript in the Browser — A Brief Look
+## 1.6 How JavaScript Runs — The Engine
 
-While this track focuses on Node.js, understanding the browser context helps you write better full-stack code:
+Unlike Java which compiles to bytecode upfront, JavaScript is parsed and compiled at runtime:
 
-```html
-<!-- index.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>JS Demo</title>
-</head>
-<body>
-  <h1 id="greeting">Hello</h1>
-  <button id="changeBtn">Change Text</button>
+1. **Parsing** — source code → AST (Abstract Syntax Tree)
+2. **Compilation** — AST → bytecode (V8's Ignition compiler)
+3. **Optimisation** — hot code paths get JIT-compiled to native machine code (Turbofan)
+4. **Execution** — runs on the event loop (covered in Module 08)
 
-  <script type="module" src="app.js"></script>
-</body>
-</html>
-```
-
-```javascript
-// app.js
-const heading = document.getElementById('greeting');
-const btn = document.getElementById('changeBtn');
-
-btn.addEventListener('click', () => {
-  heading.textContent = 'Hello, JavaScript!';
-  heading.style.color = 'dodgerblue';
-});
-```
-
-The browser provides the **DOM API** (`document`, `window`) which is not available in Node.js. Node.js provides the **file system** (`fs`), **HTTP**, and **process** APIs which are not available in the browser.
+Key consequence: errors that Java catches at **compile time** only appear at **runtime** in plain JavaScript. This is the main motivation for TypeScript (used in Angular).
 
 ---
 
 ## 1.7 `use strict`
 
-Strict mode makes JavaScript safer by converting silent errors into thrown errors:
+Strict mode makes JavaScript safer by converting silent bugs into thrown errors:
 
 ```javascript
-'use strict';  // at top of file or function
+'use strict';  // add at top of file or function
 
-x = 10;           // ❌ ReferenceError: x is not defined (in sloppy mode: creates global)
+x = 10;           // ❌ ReferenceError: x is not defined
+                   //    (without strict: silently creates a global!)
 delete Object.prototype;  // ❌ TypeError
-function sum(a, a) {}     // ❌ SyntaxError: duplicate parameter
+function sum(a, a) {}     // ❌ SyntaxError: duplicate parameter name
 ```
 
-**ES modules (files with `import`/`export`) are always in strict mode.** In Node.js with `"type": "module"` in `package.json`, all files are strict automatically.
+**Good news:** ES modules (files using `import`/`export`) are **always** in strict mode automatically. In Node.js with `"type": "module"` in `package.json`, all files are strict. So in modern development you don't need to type it manually.
 
 ---
 
 ## Key Takeaways
 
-- JavaScript is dynamic, interpreted, and single-threaded; Java is static, compiled, and multi-threaded.
-- The same V8 engine powers both Chrome and Node.js — only the available APIs differ.
-- Write ES2020+ code. Node.js 20 LTS supports it fully.
+- JavaScript is dynamic, interpreted, and single-threaded. Java is static, compiled, and multi-threaded.
+- The same V8 engine powers Chrome and Node.js — only the available APIs differ.
+- ES2020+ is modern JavaScript. Write it. Node.js 20 LTS supports it fully.
 - ES modules are always in strict mode.
-- Type errors in JavaScript are runtime errors, not compile-time. TypeScript (Part 4) fixes this.
+- Type errors in plain JavaScript are runtime errors. TypeScript (used in Angular) fixes this.
 
 ---
 
 ## Self-Check Questions
 
-1. What is the difference between the JavaScript engine in the browser and in Node.js?
-2. Why does JavaScript have both `null` and `undefined`?
-3. What is the ECMAScript standard and why does it matter?
-4. What is `use strict` and when is it applied automatically?
-5. Name three browser APIs that are not available in Node.js, and three Node.js APIs not available in the browser.
+1. What does "single-threaded" mean in JavaScript, and how does it still handle concurrent tasks?
+2. Why does JavaScript have both `null` and `undefined` when Java only has `null`?
+3. What is the ECMAScript standard and what is TC39?
+4. Name three browser APIs not available in Node.js, and three Node.js APIs not available in the browser.
+5. When is `'use strict'` applied automatically without you writing it?

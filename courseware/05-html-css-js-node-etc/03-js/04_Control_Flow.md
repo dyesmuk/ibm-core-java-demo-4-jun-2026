@@ -1,4 +1,6 @@
-# JS Basics — Module 04: Control Flow
+# JavaScript Courseware — Module 04: Control Flow
+
+---
 
 ## 4.1 `if / else if / else`
 
@@ -16,16 +18,41 @@ if (score >= 90) {
 } else {
   console.log('F');
 }
+```
 
-// Single-line (no braces) — acceptable for very simple cases
-if (score > 50) console.log('Pass');
+### Guard Clauses — Flat Is Better Than Nested
 
-// Common guard clause pattern (early return)
-function processUser(user) {
-  if (!user) return null;              // guard: bail early
-  if (!user.isActive) return null;     // guard: bail early
-  // ... main logic here
-  return user.name;
+This is a key professional coding pattern. Instead of deeply nested `if` blocks, bail early:
+
+```javascript
+// ❌ Deep nesting — hard to read
+function processOrder(order) {
+  if (order) {
+    if (order.isValid) {
+      if (order.items.length > 0) {
+        if (order.customer.hasCreditCard) {
+          return charge(order);
+        } else {
+          return 'No credit card';
+        }
+      } else {
+        return 'No items';
+      }
+    } else {
+      return 'Invalid order';
+    }
+  } else {
+    return 'No order';
+  }
+}
+
+// ✅ Guard clauses — flat, readable, professional
+function processOrder(order) {
+  if (!order)                        return 'No order';
+  if (!order.isValid)                return 'Invalid order';
+  if (order.items.length === 0)      return 'No items';
+  if (!order.customer.hasCreditCard) return 'No credit card';
+  return charge(order);
 }
 ```
 
@@ -43,7 +70,7 @@ switch (day) {
   case 'Thursday':
   case 'Friday':
     console.log('Weekday');
-    break;              // without break, falls through to next case
+    break;
   case 'Saturday':
   case 'Sunday':
     console.log('Weekend');
@@ -51,45 +78,25 @@ switch (day) {
   default:
     console.log('Invalid day');
 }
-
-// switch uses === internally — no type coercion
-switch (2) {
-  case "2": console.log("string");  // not matched
-  case 2:   console.log("number");  // matched ✅
-}
-
-// Fall-through is intentional here:
-switch (phase) {
-  case 'setup':
-    initialise();
-    // falls through intentionally
-  case 'running':
-    processEvents();
-    break;
-  case 'done':
-    cleanup();
-    break;
-}
 ```
 
-### Modern Alternative: Object Lookup
+Important: `switch` uses `===` internally (strict equality). No type coercion.
 
-For many `switch` cases mapping to values, an object lookup is cleaner:
+Without `break`, execution **falls through** to the next case — this is intentional in some patterns but a bug if forgotten.
+
+### Modern Alternative: Object Lookup Table
+
+For many `switch` cases that map to values or functions, an object is cleaner:
 
 ```javascript
-// Instead of a long switch:
+// Instead of a long switch for values:
 const dayNames = {
-  0: 'Sunday',
-  1: 'Monday',
-  2: 'Tuesday',
-  3: 'Wednesday',
-  4: 'Thursday',
-  5: 'Friday',
-  6: 'Saturday'
+  0: 'Sunday', 1: 'Monday', 2: 'Tuesday',
+  3: 'Wednesday', 4: 'Thursday', 5: 'Friday', 6: 'Saturday'
 };
-const dayName = dayNames[new Date().getDay()] ?? 'Unknown';
+const today = dayNames[new Date().getDay()] ?? 'Unknown';
 
-// Handler dispatch pattern (common in Node.js/React)
+// Handler dispatch pattern (common in Node.js / React state management)
 const handlers = {
   'CREATE': handleCreate,
   'UPDATE': handleUpdate,
@@ -97,23 +104,23 @@ const handlers = {
 };
 const handler = handlers[action.type];
 if (handler) handler(action.payload);
+else throw new Error(`Unknown action: ${action.type}`);
 ```
 
 ---
 
 ## 4.3 Loops
 
-### `for` Loop
+### `for` Loop — Classic
 
 ```javascript
-// Classic for loop (identical to Java)
 for (let i = 0; i < 5; i++) {
   console.log(i);   // 0 1 2 3 4
 }
 
 // Reverse
-for (let i = 4; i >= 0; i--) {
-  console.log(i);   // 4 3 2 1 0
+for (let i = arr.length - 1; i >= 0; i--) {
+  console.log(arr[i]);
 }
 ```
 
@@ -126,24 +133,26 @@ while (count < 5) {
   count++;
 }
 
-// do...while: always executes at least once
-let input;
+// do...while: always runs at least once
+let attempts = 0;
 do {
-  input = getInput();   // imagine a function that reads input
-} while (input === '');
+  attempts++;
+  result = tryConnect();
+} while (!result && attempts < 3);
 ```
 
-### `for...of` — Iterating Values (Use This for Arrays)
+### `for...of` — Use This for Arrays and Iterables
+
+This is the preferred modern loop for arrays. It gives you **values**:
 
 ```javascript
 const fruits = ['apple', 'banana', 'cherry'];
 
-// for...of: value at each iteration
 for (const fruit of fruits) {
   console.log(fruit);   // apple, banana, cherry
 }
 
-// With index (use entries())
+// With index — use entries()
 for (const [index, fruit] of fruits.entries()) {
   console.log(`${index}: ${fruit}`);
   // 0: apple
@@ -153,7 +162,7 @@ for (const [index, fruit] of fruits.entries()) {
 
 // Works on any iterable: strings, Sets, Maps, generators
 for (const char of 'hello') {
-  console.log(char);   // h, e, l, l, o
+  console.log(char);   // h e l l o
 }
 
 for (const [key, value] of new Map([['a', 1], ['b', 2]])) {
@@ -161,89 +170,77 @@ for (const [key, value] of new Map([['a', 1], ['b', 2]])) {
 }
 ```
 
-### `for...in` — Iterating Object Keys (Use with Care)
+### `for...in` — For Object Keys (Use Carefully)
+
+`for...in` iterates over **all enumerable property keys** including inherited ones:
 
 ```javascript
-const person = { name: 'Alice', age: 30, city: 'NYC' };
+const person = { name: 'Alice', age: 30, city: 'Bengaluru' };
 
 for (const key in person) {
   console.log(`${key}: ${person[key]}`);
-  // name: Alice
-  // age: 30
-  // city: NYC
 }
 
-// WARNING: for...in iterates prototype chain too
-// Safe pattern:
+// WARNING: includes inherited properties too
+// Safer pattern:
 for (const key in obj) {
   if (Object.prototype.hasOwnProperty.call(obj, key)) {
     // only own properties
   }
 }
-
-// Better alternative for objects: Object.keys, Object.values, Object.entries
-Object.keys(person).forEach(key => console.log(key));
-Object.values(person).forEach(val => console.log(val));
-Object.entries(person).forEach(([key, val]) => console.log(`${key}: ${val}`));
 ```
 
----
-
-## 4.4 `break` and `continue`
+> **Prefer this over `for...in` for objects:**
 
 ```javascript
-// break: exit the loop immediately
+Object.keys(person)    // ['name', 'age', 'city']
+Object.values(person)  // ['Alice', 30, 'Bengaluru']
+Object.entries(person) // [['name','Alice'], ['age',30], ['city','Bengaluru']]
+
+// Loop over entries — clean and safe
+for (const [key, value] of Object.entries(person)) {
+  console.log(`${key}: ${value}`);
+}
+```
+
+### `break` and `continue`
+
+```javascript
 for (let i = 0; i < 10; i++) {
-  if (i === 5) break;
-  console.log(i);   // 0 1 2 3 4
+  if (i === 5) break;      // exits loop
+  console.log(i);          // 0 1 2 3 4
 }
 
-// continue: skip current iteration
 for (let i = 0; i < 10; i++) {
-  if (i % 2 === 0) continue;
-  console.log(i);   // 1 3 5 7 9  (odd numbers only)
+  if (i % 2 === 0) continue;  // skip even
+  console.log(i);              // 1 3 5 7 9
 }
 
-// break with label (rare — like Java's labeled break)
+// Labeled break for nested loops (rare but useful)
 outer: for (let i = 0; i < 3; i++) {
   for (let j = 0; j < 3; j++) {
-    if (i === 1 && j === 1) break outer;
+    if (i === 1 && j === 1) break outer;  // exits BOTH loops
     console.log(i, j);
   }
 }
-// 0 0 | 0 1 | 0 2 | 1 0  (stops at i=1, j=1)
 ```
 
 ---
 
-## 4.5 Error Handling
+## 4.4 Error Handling
 
 ### `try / catch / finally`
 
 ```javascript
-// Basic try-catch (identical to Java syntax)
 try {
   const data = JSON.parse('invalid json');
 } catch (error) {
   console.error('Parse error:', error.message);
 } finally {
-  console.log('Always runs');
+  console.log('Always runs — cleanup here');
 }
 
-// Rethrowing errors
-function readConfig(path) {
-  try {
-    const data = fs.readFileSync(path, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      throw new Error(`Config file not found: ${path}`);   // rethrow with context
-    }
-    throw error;   // rethrow unknown errors
-  }
-}
-
-// Optional catch binding (ES2019) — when you don't need the error object
+// Optional catch binding (ES2019) — when you don't need the error
 try {
   return JSON.parse(text);
 } catch {
@@ -251,29 +248,48 @@ try {
 }
 ```
 
+### Throwing Errors
+
+```javascript
+function divide(a, b) {
+  if (b === 0) throw new Error('Division by zero');
+  return a / b;
+}
+
+// Rethrowing with context
+function readConfig(path) {
+  try {
+    const data = fs.readFileSync(path, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      throw new Error(`Config file not found: ${path}`);  // wrap with context
+    }
+    throw error;  // rethrow unknown errors unchanged
+  }
+}
+```
+
 ### Built-in Error Types
 
 ```javascript
-new Error('Something went wrong')          // generic
-new TypeError('Expected a string')         // wrong type
-new RangeError('Index out of bounds')      // value out of range
-new ReferenceError('x is not defined')     // undeclared variable
-new SyntaxError('Unexpected token')        // invalid syntax
-new URIError('malformed URI')
-new EvalError()                            // eval-related (rare)
+new Error('Something went wrong')     // generic
+new TypeError('Expected a string')    // wrong type passed
+new RangeError('Index out of bounds') // value out of valid range
+new ReferenceError('x is not defined')// undeclared variable
+new SyntaxError('Unexpected token')   // invalid syntax
 ```
 
-### Custom Error Classes
+### Custom Error Classes (Use in Every Node.js/Express App)
 
 ```javascript
-// Extend Error for domain-specific errors (very useful in Node.js APIs)
 class AppError extends Error {
   constructor(message, statusCode = 500) {
     super(message);
     this.name = 'AppError';
     this.statusCode = statusCode;
-    this.isOperational = true;    // flag for "expected" errors vs bugs
-    Error.captureStackTrace(this, this.constructor);  // cleaner stack trace
+    this.isOperational = true;  // distinguishes expected errors from bugs
+    Error.captureStackTrace(this, this.constructor);
   }
 }
 
@@ -299,15 +315,11 @@ function getUser(id) {
   return user;
 }
 
-// Handling in Express middleware
+// Express error handler (middleware)
 app.use((err, req, res, next) => {
   if (err instanceof AppError) {
-    return res.status(err.statusCode).json({
-      error: err.message,
-      field: err.field
-    });
+    return res.status(err.statusCode).json({ error: err.message });
   }
-  // Unexpected error
   console.error(err.stack);
   res.status(500).json({ error: 'Internal server error' });
 });
@@ -315,107 +327,23 @@ app.use((err, req, res, next) => {
 
 ---
 
-## 4.6 Short-Circuit Patterns
-
-Very common in JavaScript codebases:
+## 4.5 Destructuring in Loops
 
 ```javascript
-// Execute if condition is truthy
-isAdmin && deleteUser(id);       // only calls deleteUser if isAdmin
-user && console.log(user.name);  // guard against null
-
-// Default with ||
-const port = process.env.PORT || 3000;
-
-// Default with ?? (preferred when 0 or "" are valid)
-const timeout = config.timeout ?? 5000;
-
-// One-liner functions using && and ||
-const isEven = n => n % 2 === 0;
-const abs = n => n < 0 ? -n : n;
-
-// Conditional execution
-const result = value !== null
-  ? processValue(value)
-  : getDefault();
-```
-
----
-
-## 4.7 Destructuring in Control Flow
-
-```javascript
-// Destructure in loop
 const users = [
   { id: 1, name: 'Alice', role: 'admin' },
-  { id: 2, name: 'Bob',   role: 'user' }
+  { id: 2, name: 'Bob',   role: 'user'  }
 ];
 
+// Destructure directly in loop
 for (const { id, name, role } of users) {
   console.log(`${id}: ${name} (${role})`);
 }
 
-// Switch on object property
-function handleEvent({ type, payload }) {
-  switch (type) {
-    case 'LOGIN':  return authenticate(payload);
-    case 'LOGOUT': return invalidateSession(payload.userId);
-    default:       throw new Error(`Unknown event: ${type}`);
-  }
-}
-```
-
----
-
-## 4.8 Practical Control Flow Patterns
-
-### Guard Clauses (Preferred over Deep Nesting)
-
-```javascript
-// ❌ Deep nesting — hard to read
-function processOrder(order) {
-  if (order) {
-    if (order.isValid) {
-      if (order.items.length > 0) {
-        if (order.customer.hasCreditCard) {
-          return charge(order);
-        } else {
-          return 'No credit card';
-        }
-      } else {
-        return 'No items';
-      }
-    } else {
-      return 'Invalid order';
-    }
-  } else {
-    return 'No order';
-  }
-}
-
-// ✅ Guard clauses — flat, readable
-function processOrder(order) {
-  if (!order)                       return 'No order';
-  if (!order.isValid)               return 'Invalid order';
-  if (order.items.length === 0)     return 'No items';
-  if (!order.customer.hasCreditCard) return 'No credit card';
-  return charge(order);
-}
-```
-
-### Pattern: Exhaustive Checks
-
-```javascript
-// TypeScript-style exhaustive switch (useful for future-proofing)
-function describeShape(shape) {
-  switch (shape.kind) {
-    case 'circle':   return `Circle r=${shape.radius}`;
-    case 'square':   return `Square s=${shape.side}`;
-    case 'rectangle': return `Rect ${shape.width}×${shape.height}`;
-    default:
-      // If shape is typed in TypeScript, this line catches unhandled cases
-      throw new Error(`Unhandled shape: ${shape.kind}`);
-  }
+// Destructure Object.entries
+const config = { host: 'localhost', port: 3000, debug: false };
+for (const [key, value] of Object.entries(config)) {
+  console.log(`${key} = ${value}`);
 }
 ```
 
@@ -423,18 +351,18 @@ function describeShape(shape) {
 
 ## Key Takeaways
 
-- Prefer `for...of` for arrays; `Object.keys/values/entries()` for objects; avoid `for...in`.
-- Use guard clauses (early returns) to flatten nested `if` logic.
-- Create custom `Error` subclasses for domain errors in Node.js apps.
-- Short-circuit patterns (`&&`, `||`, `??`) replace many simple `if` statements in practice.
-- `switch` uses strict equality (`===`) — no type coercion.
+- Use **guard clauses** (early returns) to flatten deeply nested `if` logic — it's a professional pattern.
+- `for...of` for arrays and iterables; `Object.entries()` for objects.
+- Avoid `for...in` on arrays — use it only on plain objects and guard with `hasOwnProperty`.
+- Create **custom Error subclasses** for domain errors in your Node.js apps.
+- `switch` uses `===` — no coercion. Don't forget `break`.
 
 ---
 
 ## Self-Check Questions
 
 1. What is the difference between `for...in` and `for...of`? When should you use each?
-2. Rewrite the following using guard clauses: `if (user) { if (user.isActive) { doThing() } }`
-3. How do you create a custom error class with a custom `statusCode` property?
-4. What does `const port = process.env.PORT || 3000` do, and what potential issue does `??` solve?
-5. Why is it important to `break` in `switch` cases?
+2. Rewrite this with guard clauses: `if (user) { if (user.isActive) { doThing() } }`
+3. How do you create a custom error class with a `statusCode` property?
+4. What does `const port = process.env.PORT || 3000` do? Why might `??` be better?
+5. What is the "object lookup table" pattern and when would you use it instead of `switch`?
