@@ -1,85 +1,71 @@
 # Module 01 — JavaScript & TypeScript Refresh
 
 ## Learning Objectives
-- Recall the ES6+ features React uses every day
-- Understand TypeScript type annotations used in React
-- Know when and how to use destructuring, spread, and async/await
+- Recall the ES6+ patterns React uses every single day
+- Understand TypeScript type annotations as used in React code
+- Know destructuring, spread, async/await cold
 
-> **Skip this module** if you're already comfortable with ES2022+ JavaScript and basic TypeScript.
+> **Skip or skim** this module if you're already writing ES2022+ JavaScript and basic TypeScript daily.
 
 ---
 
-## 1.1 `const` and `let` — Never Use `var`
+## 1.1 `const` and `let` — Forget `var` Exists
 
 ```ts
-// var — function scoped, hoisted, reassignable — AVOID
-var name = 'Alice';
+const MAX_EMPLOYEES = 100   // block-scoped, can't be reassigned
+let count = 0               // block-scoped, can be reassigned
+count = 1                   // ✅
 
-// let — block scoped, reassignable
-let count = 0;
-count = 1; // ✅
-
-// const — block scoped, NOT reassignable
-const MAX = 100;
-MAX = 200; // ❌ TypeError
-
-// BUT: const objects/arrays are still mutable
-const user = { name: 'Alice' };
-user.name = 'Bob';  // ✅ mutating the object is fine
-user = {};          // ❌ reassigning the variable is not
+// const with objects — binding can't change, but the object can
+const user = { name: 'Alice' }
+user.name = 'Bob'           // ✅ mutating is fine
+user = {}                   // ❌ reassigning the variable is not
 ```
 
-**React rule:** Use `const` for everything. Use `let` only when you know you'll reassign (loop counters). Never `var`.
+**React rule:** Use `const` for everything. `let` only in loops or when you know you'll reassign. Never `var`.
 
 ---
 
 ## 1.2 Arrow Functions
 
 ```ts
-// Traditional function
-function add(a: number, b: number): number {
-  return a + b;
-}
+// Traditional
+function add(a: number, b: number): number { return a + b }
 
-// Arrow function — same thing
-const add = (a: number, b: number): number => {
-  return a + b;
-};
+// Arrow — same behaviour
+const add = (a: number, b: number): number => a + b
 
-// Implicit return (single expression, no braces)
-const add = (a: number, b: number): number => a + b;
+// Single param — parens optional, but keep them for consistency
+const double = (n: number) => n * 2
 
-// Single parameter — parens optional (but always include for consistency)
-const double = (n: number) => n * 2;
+// No params
+const greet = () => 'Hello!'
 
-// No parameters
-const greet = () => 'Hello!';
-
-// Returning an object — wrap in parens to avoid {} ambiguity
-const makeUser = (name: string) => ({ name, active: true });
+// Returning an object — wrap in parens to avoid {} being read as a code block
+const makeUser = (name: string) => ({ name, active: true })
 ```
 
-**Where React uses arrow functions constantly:**
+**React uses arrow functions constantly:**
 
 ```tsx
-// 1. Event handlers
+// Event handlers
 <button onClick={() => console.log('clicked')}>Click</button>
 
-// 2. Array methods in JSX
+// Array methods in JSX
 {employees.map(emp => <EmployeeCard key={emp.id} employee={emp} />)}
 
-// 3. useEffect callbacks
-useEffect(() => { fetchData(); }, []);
+// useEffect callbacks
+useEffect(() => { fetchData() }, [])
 
-// 4. useState functional updates
-setCount(prev => prev + 1);
+// Functional state updates
+setCount(prev => prev + 1)
 ```
 
 ---
 
 ## 1.3 Destructuring
 
-Destructuring extracts values from objects and arrays into named variables.
+Extract values from objects and arrays into named variables — the most-used pattern in React props.
 
 ### Object destructuring
 
@@ -89,83 +75,93 @@ const employee = {
   name: 'Alice Johnson',
   department: 'Engineering',
   salary: 95000,
-  address: { city: 'Bengaluru', country: 'India' }
-};
+}
 
 // Without destructuring
-const name = employee.name;
-const dept = employee.department;
+const name = employee.name
+const dept = employee.department
 
 // With destructuring
-const { name, department } = employee;
+const { name, department } = employee
 
 // Rename while destructuring
-const { name: fullName, department: dept } = employee;
+const { name: fullName, department: dept } = employee
 
-// Default values
-const { name, role = 'employee' } = employee; // role → 'employee' if missing
+// Default value (used when the property is undefined)
+const { name, role = 'employee' } = employee
 
-// Nested destructuring
-const { address: { city } } = employee; // city → 'Bengaluru'
+// Nested
+const employee2 = { ...employee, address: { city: 'Bengaluru' } }
+const { address: { city } } = employee2   // city → 'Bengaluru'
 
-// In function parameters (very common in React for props)
-function EmployeeCard({ name, department, salary }: Employee) {
-  return <p>{name} — {department}</p>;
+// In function parameters — how React props work
+function EmployeeCard({ name, department, salary }: EmployeeCardProps) {
+  return <p>{name} — {department}</p>
 }
 ```
 
 ### Array destructuring
 
 ```ts
-const colors = ['red', 'green', 'blue'];
+const colors = ['red', 'green', 'blue']
+const [first, second] = colors    // first='red', second='green'
 
-const [first, second, third] = colors;
-// first → 'red', second → 'green', third → 'blue'
+// Skip elements
+const [, , third] = colors        // third='blue'
 
-// Skip elements with empty slots
-const [, , third] = colors;
-
-// useState always uses array destructuring
-const [count, setCount] = useState(0);
-//     ↑ value  ↑ setter
+// useState ALWAYS uses array destructuring
+const [count, setCount] = useState(0)
+//     ↑ value  ↑ setter function
 ```
 
 ---
 
-## 1.4 Spread Operator (`...`)
+## 1.4 Spread Operator
 
 ```ts
-// Spread array
-const a = [1, 2, 3];
-const b = [4, 5, 6];
-const merged = [...a, ...b]; // [1, 2, 3, 4, 5, 6]
-const copy   = [...a];       // [1, 2, 3] — shallow copy
+// Arrays
+const a = [1, 2, 3]
+const b = [4, 5, 6]
+const merged = [...a, ...b]       // [1,2,3,4,5,6]
+const copy   = [...a]             // shallow copy
 
-// Spread object
-const defaults = { theme: 'light', lang: 'en', fontSize: 14 };
-const overrides = { lang: 'hi', fontSize: 16 };
-const config = { ...defaults, ...overrides };
-// → { theme: 'light', lang: 'hi', fontSize: 16 }
-// Right-side wins on conflict
+// Objects
+const defaults = { theme: 'light', lang: 'en' }
+const overrides = { lang: 'hi' }
+const config = { ...defaults, ...overrides }
+// → { theme: 'light', lang: 'hi' }  (right side wins on conflicts)
+```
 
-// Very common in React state updates
-setEmployee(prev => ({ ...prev, name: 'Bob' })); // update one field
-setList(prev => [...prev, newItem]);             // add item to array
-setList(prev => prev.filter(i => i.id !== id));  // remove item
+**Most common React state update patterns:**
+
+```ts
+// Update one field in an object
+setEmployee(prev => ({ ...prev, name: 'Bob' }))
+
+// Add item to array
+setList(prev => [...prev, newItem])
+
+// Remove item from array
+setList(prev => prev.filter(item => item.id !== id))
+
+// Update one item in array
+setList(prev => prev.map(item =>
+  item.id === id ? { ...item, isActive: false } : item
+))
 ```
 
 ### Rest parameters
 
 ```ts
-// Collect remaining elements
-function sum(first: number, ...rest: number[]): number {
-  return rest.reduce((acc, n) => acc + n, first);
+// Collect remaining into array
+function sum(first: number, ...rest: number[]) {
+  return rest.reduce((acc, n) => acc + n, first)
 }
-sum(1, 2, 3, 4); // 10
+sum(1, 2, 3, 4)   // 10
 
-// Common in React: separating "own" props from pass-through props
+// Common in React: separate "own" props from pass-through props
 function Wrapper({ className, ...rest }: Props) {
-  return <div className={`wrapper ${className}`} {...rest} />;
+  return <div className={`wrapper ${className}`} {...rest} />
 }
 ```
 
@@ -174,83 +170,52 @@ function Wrapper({ className, ...rest }: Props) {
 ## 1.5 Template Literals
 
 ```ts
-const name = 'Alice';
-const dept = 'Engineering';
+const name = 'Alice'
+const salary = 95000
 
-// Old concatenation — messy
-'Hello, ' + name + '! Department: ' + dept
+// Old way
+'Hello, ' + name + '! Salary: $' + salary.toLocaleString()
 
-// Template literal — clean
-`Hello, ${name}! Department: ${dept}`
+// Template literal — always prefer this
+`Hello, ${name}! Salary: $${salary.toLocaleString()}`
 
-// Multi-line
-const html = `
-  <div>
-    <h1>${name}</h1>
-    <p>${dept}</p>
-  </div>
-`;
-
-// Expressions inside ${}
+// Any expression works inside ${}
 `${count > 1 ? 'employees' : 'employee'}`
-`$${salary.toLocaleString()}`
+`${new Date().getFullYear()}`
 ```
 
 ---
 
-## 1.6 Array Methods
-
-These are the backbone of list rendering in React.
-
-### `.map()` — transform every item
+## 1.6 Array Methods — The Backbone of List Rendering
 
 ```ts
-const salaries = [50000, 75000, 90000];
-const formatted = salaries.map(s => `$${s.toLocaleString()}`);
-// ['$50,000', '$75,000', '$90,000']
+const employees = [
+  { id: 1, name: 'Alice', dept: 'Engineering', salary: 95000, isActive: true },
+  { id: 2, name: 'Bob',   dept: 'Marketing',   salary: 72000, isActive: true },
+  { id: 3, name: 'Carol', dept: 'Engineering', salary: 88000, isActive: false },
+]
 
-// In React JSX:
-{employees.map(emp => (
-  <EmployeeCard key={emp.id} employee={emp} />
-))}
-```
+// map — transform every element, return new array of same length
+employees.map(e => e.name)            // ['Alice','Bob','Carol']
 
-### `.filter()` — keep items matching a condition
+// filter — keep elements matching condition, return shorter array
+employees.filter(e => e.isActive)     // [Alice, Bob]
 
-```ts
-const active = employees.filter(emp => emp.isActive);
-const engineers = employees.filter(emp => emp.department === 'Engineering');
-```
+// find — first matching element or undefined
+employees.find(e => e.id === 2)       // Bob's object
 
-### `.find()` — first matching item or undefined
+// findIndex — index of first match or -1
+employees.findIndex(e => e.id === 2)  // 1
 
-```ts
-const alice = employees.find(emp => emp.id === 1);
-```
+// some / every
+employees.some(e => e.salary > 90000)   // true (Alice)
+employees.every(e => e.isActive)        // false (Carol)
 
-### `.findIndex()` — index of first match
+// reduce — accumulate to single value
+employees.reduce((sum, e) => sum + e.salary, 0)   // 255000
 
-```ts
-const idx = employees.findIndex(emp => emp.id === 1);
-```
-
-### `.some()` / `.every()`
-
-```ts
-employees.some(emp => emp.salary > 100000);  // true if at least one matches
-employees.every(emp => emp.isActive);         // true if ALL match
-```
-
-### `.reduce()` — accumulate into a single value
-
-```ts
-const totalSalary = employees.reduce((sum, emp) => sum + emp.salary, 0);
-```
-
-### `.sort()` — sort (mutates! always copy first)
-
-```ts
-const sorted = [...employees].sort((a, b) => a.name.localeCompare(b.name));
+// sort — always copy first (sort mutates!)
+[...employees].sort((a, b) => a.name.localeCompare(b.name))
 ```
 
 ---
@@ -260,83 +225,66 @@ const sorted = [...employees].sort((a, b) => a.name.localeCompare(b.name));
 Every React file is a module.
 
 ```ts
-// ── named exports ──────────────────────────────────
-// utils/formatters.ts
-export const formatSalary = (n: number) => `$${n.toLocaleString()}`;
-export const formatDate = (d: string) => new Date(d).toLocaleDateString();
+// Named exports
+export const formatSalary = (n: number) => `$${n.toLocaleString()}`
+export const getInitials  = (name: string) => name.split(' ').map(w => w[0]).join('')
 
-// Importing named exports
-import { formatSalary, formatDate } from './utils/formatters';
-import { formatSalary as fmt } from './utils/formatters'; // rename
+// Import named exports
+import { formatSalary, getInitials } from './utils/formatters'
+import { formatSalary as fmt }        from './utils/formatters'  // rename
 
-// ── default export ─────────────────────────────────
-// components/EmployeeCard.tsx
-function EmployeeCard() { /* ... */ }
-export default EmployeeCard;
+// Default export — one per file
+export default function EmployeeCard() { /* ... */ }
 
-// Importing default export (name can be anything)
-import EmployeeCard from './components/EmployeeCard';
+// Import default (any name works)
+import EmployeeCard from './components/EmployeeCard'
 
-// ── mixed ──────────────────────────────────────────
-export default EmployeeCard;
-export type { Employee };        // type-only export
+// Barrel re-exports (clean public API for a folder)
+// src/components/index.ts
+export { default as EmployeeCard } from './EmployeeCard'
+export { default as EmployeeList } from './EmployeeList'
 
-// Re-export everything from a folder's index.ts
-export { EmployeeCard } from './EmployeeCard';
-export { EmployeeList } from './EmployeeList';
+// Usage
+import { EmployeeCard, EmployeeList } from './components'
 ```
 
 ---
 
-## 1.8 Promises and Async / Await
+## 1.8 Async / Await
 
-API calls in React are async — you need to understand this.
-
-### The problem with synchronous code
+API calls in React are async — this must be second nature.
 
 ```ts
-// This DOES NOT wait for the server to reply
-const data = fetch('/api/employees');
-console.log(data); // Promise { <pending> } — NOT the data!
-```
+// ❌ This does NOT wait for the server
+const data = fetch('/api/employees')
+console.log(data)   // Promise { <pending> } — NOT the data!
 
-### Promises
-
-```ts
-fetch('/api/employees')
-  .then(response => response.json())
-  .then(data => console.log(data))
-  .catch(error => console.error(error));
-```
-
-### Async / Await — same thing, cleaner syntax
-
-```ts
+// ✅ async/await — reads like synchronous code
 async function loadEmployees() {
   try {
-    const response = await fetch('/api/employees');
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    return data;
+    const response = await fetch('/api/employees')
+    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    const data = await response.json()
+    return data
   } catch (error) {
-    console.error('Failed:', error);
-    throw error;
+    console.error('Failed to load:', error)
+    throw error
   }
 }
 ```
 
-### In React's `useEffect`
+**In React's `useEffect`:**
 
 ```tsx
 useEffect(() => {
-  // useEffect itself cannot be async
-  // wrap the async logic in an inner function
+  // useEffect callback cannot be async itself
+  // → create an async inner function and call it
   const load = async () => {
-    const data = await loadEmployees();
-    setEmployees(data);
-  };
-  load();
-}, []);
+    const data = await loadEmployees()
+    setEmployees(data)
+  }
+  load()
+}, [])
 ```
 
 ---
@@ -344,18 +292,16 @@ useEffect(() => {
 ## 1.9 Optional Chaining and Nullish Coalescing
 
 ```ts
-// Optional chaining ?.  — safe property access
-const city = employee?.address?.city;       // undefined if any is null/undefined
-const first = employees?.[0];               // undefined if array is null/undefined
-const name = employee?.getName?.();         // safe method call
+// Optional chaining ?. — safe property access without crashing
+const city = employee?.address?.city        // undefined if any part is null/undefined
+const first = employees?.[0]               // undefined if array is null/undefined
 
-// Nullish coalescing ??  — default when null/undefined (not falsy!)
-const role = employee.role ?? 'viewer';     // 'viewer' if role is null or undefined
-const count = employee.count ?? 0;          // 0 only if count is null/undefined
-                                             // (unlike || which also catches 0, '', false)
+// Nullish coalescing ?? — default only for null or undefined (NOT for 0 or "")
+const role  = employee.role ?? 'viewer'    // 'viewer' only if role is null/undefined
+const count = employee.count ?? 0          // keeps 0 if count is 0
 
-// Combine
-const city = user?.address?.city ?? 'Unknown';
+// Combine them
+const city = user?.address?.city ?? 'Unknown'
 ```
 
 ---
@@ -365,132 +311,94 @@ const city = user?.address?.city ?? 'Unknown';
 ### Basic types
 
 ```ts
-const name: string = 'Alice';
-const age: number = 30;
-const active: boolean = true;
-const ids: number[] = [1, 2, 3];
-const tuple: [string, number] = ['Alice', 30];
+const name: string    = 'Alice'
+const age: number     = 30
+const active: boolean = true
+const ids: number[]   = [1, 2, 3]
 ```
 
-### Interfaces (preferred for objects and props)
+### Interfaces — preferred for objects and props
 
 ```ts
 interface Employee {
-  id: number;
-  name: string;
-  email: string;
-  department: string;
-  salary: number;
-  isActive: boolean;
-  joinDate: string;
-  address?: {           // optional — may be undefined
-    city: string;
-    country: string;
-  };
+  id: number
+  name: string
+  email: string
+  department: string
+  salary: number
+  isActive: boolean
+  joinDate: string
+  address?: {          // optional — may be undefined
+    city: string
+    country: string
+  }
 }
 ```
 
-### Type aliases (good for unions and primitives)
+### Type aliases — good for unions
 
 ```ts
-type Department = 'Engineering' | 'Marketing' | 'HR' | 'Finance' | 'Sales';
-type Status = 'active' | 'inactive' | 'on-leave';
-type ID = string | number;
+type Department = 'Engineering' | 'Marketing' | 'HR' | 'Finance' | 'Sales'
+type Status     = 'active' | 'inactive' | 'on-leave'
 ```
 
-### Generics — typed containers
+### Generics
 
 ```ts
 // useState with type parameter
-const [employees, setEmployees] = useState<Employee[]>([]);
-const [selected, setSelected]   = useState<Employee | null>(null);
-const [loading, setLoading]     = useState<boolean>(false);
+const [employees, setEmployees] = useState<Employee[]>([])
+const [selected, setSelected]   = useState<Employee | null>(null)
 
 // Generic function
 function findById<T extends { id: number }>(list: T[], id: number): T | undefined {
-  return list.find(item => item.id === id);
+  return list.find(item => item.id === id)
 }
 ```
 
-### Props typing — two patterns
+### Props typing
 
 ```ts
-// Pattern A — interface (preferred, gives better error messages)
+// Pattern A — interface (preferred)
 interface EmployeeCardProps {
-  employee: Employee;
-  onSelect: (id: number) => void;
-  isSelected?: boolean;
+  employee: Employee
+  onSelect: (id: number) => void
+  isSelected?: boolean
 }
 function EmployeeCard({ employee, onSelect, isSelected = false }: EmployeeCardProps) {}
 
-// Pattern B — inline type
-function EmployeeCard({ name, age }: { name: string; age: number }) {}
+// Pattern B — inline (quick and dirty)
+function Badge({ label, count }: { label: string; count: number }) {}
 ```
 
 ### Common React TypeScript types
 
 ```ts
-import { ReactNode, ReactElement, CSSProperties, MouseEvent, ChangeEvent } from 'react';
+import type { ReactNode, MouseEvent, ChangeEvent, FormEvent } from 'react'
 
 // Children
-interface Props {
-  children: ReactNode;        // anything React can render
-  children: ReactElement;     // must be a single React element
-  children: string;           // only strings
+interface LayoutProps {
+  children: ReactNode    // anything React can render (elements, strings, arrays, null)
 }
 
 // Event types
-const handleClick = (e: MouseEvent<HTMLButtonElement>) => {};
-const handleChange = (e: ChangeEvent<HTMLInputElement>) => {};
-const handleSubmit = (e: FormEvent<HTMLFormElement>) => {};
-
-// Inline styles
-const style: CSSProperties = { color: 'red', fontSize: 14 };
-```
-
----
-
-## 1.11 Quick Reference Card
-
-```ts
-// Variables
-const x = 1; let y = 2;
-
-// Arrow functions
-const fn = (a: number) => a * 2;
-const fn = (a: number) => ({ value: a }); // object return
-
-// Destructuring
-const { name, age = 0 } = obj;
-const [first, ...rest] = arr;
-
-// Spread
-const merged = { ...obj1, ...obj2 };
-const copy   = [...arr, newItem];
-
-// Template literal
-`Hello ${name}, salary: $${sal.toLocaleString()}`
-
-// Array methods
-arr.map(x => x * 2)
-arr.filter(x => x > 0)
-arr.find(x => x.id === id)
-arr.reduce((acc, x) => acc + x, 0)
-
-// Async/await
-const data = await fetchEmployees();
-
-// Optional chaining + nullish coalescing
-const city = user?.address?.city ?? 'N/A';
-
-// TypeScript interface
-interface Emp { id: number; name: string; role?: string; }
+const handleClick  = (e: MouseEvent<HTMLButtonElement>)  => {}
+const handleChange = (e: ChangeEvent<HTMLInputElement>)  => {}
+const handleSubmit = (e: FormEvent<HTMLFormElement>)      => {}
 ```
 
 ---
 
 ## Summary
 
-You'll see every one of these patterns in the modules ahead. Refer back here whenever something looks unfamiliar.
+| Pattern | React use |
+|---------|-----------|
+| `const` / arrow functions | Every component and handler |
+| Object destructuring | Every component's props |
+| Array destructuring | `useState`, `useReducer` |
+| Spread `...` | State updates (never mutate!) |
+| `map / filter / find` | List rendering and derived data |
+| `async/await` | Data fetching in `useEffect` |
+| `?.` and `??` | Safe access to API data |
+| TypeScript interfaces | Every prop type, every API response |
 
-**Next → [Module 02: JSX and Components](./02-jsx-and-components.md)**
+**Next → Module 02: JSX and Components**

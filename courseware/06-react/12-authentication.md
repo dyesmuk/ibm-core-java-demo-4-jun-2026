@@ -2,34 +2,30 @@
 
 ## Learning Objectives
 - Implement a complete login/logout flow with JWT
-- Store and attach tokens securely
+- Store tokens securely and attach them to requests
 - Protect routes so only authenticated users can access them
 - Show role-based UI elements
-- Apply to EMS: Login page, AuthContext, protected `/employees` routes
+- EMS: Login page, AuthContext, protected routes for create/edit/delete
 
 ---
 
 ## 12.1 Auth Flow Overview
 
 ```
-User visits /employees
-        │
-        ▼
-ProtectedRoute checks token
-        │
-   ┌────┴────┐
-No token   Token found
-   │           │
-   ▼           ▼
-Redirect    Verify token
-to /login   with server
-               │
-          ┌────┴────┐
-        Invalid    Valid
-           │          │
-           ▼          ▼
-        Redirect    Set user
-        to /login   in context → render page
+User visits /employees/create
+        ↓
+ProtectedRoute checks for token
+        ↓
+    ┌───────────────┐
+  No token       Token found
+    ↓                 ↓
+Redirect         Decode & verify
+to /login            ↓
+            ┌────────────────┐
+          Invalid         Valid
+            ↓                ↓
+        Redirect       Set user in context
+        to /login       → render the page
 ```
 
 ---
@@ -38,77 +34,77 @@ to /login   with server
 
 ```ts
 // src/services/authService.ts
-import api from './api';
+import api from './api'
 
 export interface LoginCredentials {
-  email: string;
-  password: string;
+  email:    string
+  password: string
 }
 
 export interface AuthUser {
-  id: number;
-  name: string;
-  email: string;
-  role: 'admin' | 'user';
-  token: string;
+  id:    number
+  name:  string
+  email: string
+  role:  'admin' | 'manager' | 'user'
+  token: string
 }
+
+const TOKEN_KEY = 'ems_token'
 
 export const authService = {
   login: async (credentials: LoginCredentials): Promise<AuthUser> => {
-    const { data } = await api.post<AuthUser>('/auth/login', credentials);
-    return data;
+    const { data } = await api.post<AuthUser>('/auth/login', credentials)
+    return data
   },
 
   logout: async (): Promise<void> => {
-    await api.post('/auth/logout').catch(() => {}); // fire and forget
+    await api.post('/auth/logout').catch(() => {})   // fire and forget
   },
 
   getProfile: async (): Promise<AuthUser> => {
-    const { data } = await api.get<AuthUser>('/auth/me');
-    return data;
+    const { data } = await api.get<AuthUser>('/auth/me')
+    return data
   },
 
-  // Token helpers
-  saveToken:   (token: string) => localStorage.setItem('ems_token', token),
-  getToken:    ()               => localStorage.getItem('ems_token'),
-  removeToken: ()               => localStorage.removeItem('ems_token'),
-};
+  saveToken:   (token: string) => localStorage.setItem(TOKEN_KEY, token),
+  getToken:    ()               => localStorage.getItem(TOKEN_KEY),
+  removeToken: ()               => localStorage.removeItem(TOKEN_KEY),
+}
 ```
 
 ### Mock auth (until you have a real backend)
 
 ```ts
 // src/services/mockAuthService.ts
-import { LoginCredentials, AuthUser } from './authService';
+import type { LoginCredentials, AuthUser } from './authService'
 
 const MOCK_USERS = [
-  { id: 1, name: 'Admin User',   email: 'admin@ibm.com', password: 'admin123',  role: 'admin' as const },
-  { id: 2, name: 'Regular User', email: 'user@ibm.com',  password: 'user123',   role: 'user'  as const },
-];
+  { id: 1, name: 'Admin User',   email: 'admin@ibm.com',   password: 'admin123',  role: 'admin'   as const },
+  { id: 2, name: 'Manager Bob',  email: 'manager@ibm.com', password: 'manager123',role: 'manager' as const },
+  { id: 3, name: 'Regular User', email: 'user@ibm.com',    password: 'user123',   role: 'user'    as const },
+]
 
 export const mockAuthService = {
   login: async ({ email, password }: LoginCredentials): Promise<AuthUser> => {
-    await new Promise(r => setTimeout(r, 600)); // simulate network delay
+    await new Promise(r => setTimeout(r, 600))   // simulate network delay
 
-    const user = MOCK_USERS.find(u => u.email === email && u.password === password);
-    if (!user) throw new Error('Invalid email or password');
+    const found = MOCK_USERS.find(u => u.email === email && u.password === password)
+    if (!found) throw new Error('Invalid email or password')
 
-    const token = `mock-token-${user.id}-${Date.now()}`;
-    return { id: user.id, name: user.name, email: user.email, role: user.role, token };
+    const token = `mock-jwt-${found.id}-${Date.now()}`
+    const { password: _, ...user } = found
+    return { ...user, token }
   },
 
+  logout:     async () => {},
   getProfile: async (): Promise<AuthUser> => {
-    await new Promise(r => setTimeout(r, 200));
-    const token = localStorage.getItem('ems_token');
-    if (!token) throw new Error('No token');
-    // In a real app the server validates the token
-    // Here we just decode the mock token
-    const id = Number(token.split('-')[2]);
-    const user = MOCK_USERS.find(u => u.id === id);
-    if (!user) throw new Error('Invalid token');
-    return { id: user.id, name: user.name, email: user.email, role: user.role, token };
+    throw new Error('Not implemented in mock')
   },
-};
+
+  saveToken:   authService.saveToken,
+  getToken:    authService.getToken,
+  removeToken: authService.removeToken,
+}
 ```
 
 ---
@@ -117,103 +113,89 @@ export const mockAuthService = {
 
 ```tsx
 // src/context/AuthContext.tsx
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { mockAuthService as authService } from '../services/mockAuthService';
-import type { AuthUser, LoginCredentials } from '../services/authService';
+import { createContext, useContext, useState, useEffect } from 'react'
+import type { ReactNode } from 'react'
+import { mockAuthService as authService } from '../services/mockAuthService'
+import type { AuthUser, LoginCredentials } from '../services/authService'
 
 interface AuthContextValue {
-  user:            AuthUser | null;
-  loading:         boolean;       // initial token check
-  loginLoading:    boolean;       // login request in flight
-  error:           string | null;
-  login:           (creds: LoginCredentials) => Promise<void>;
-  logout:          () => void;
-  isAuthenticated: boolean;
-  isAdmin:         boolean;
-  clearError:      () => void;
+  user:          AuthUser | null
+  isLoading:     boolean
+  login:         (credentials: LoginCredentials) => Promise<void>
+  logout:        () => Promise<void>
+  isAuthenticated: boolean
+  isAdmin:       boolean
 }
 
-const AuthContext = createContext<AuthContextValue | null>(null);
+const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user,         setUser]         = useState<AuthUser | null>(null);
-  const [loading,      setLoading]      = useState(true);    // checking saved token
-  const [loginLoading, setLoginLoading] = useState(false);
-  const [error,        setError]        = useState<string | null>(null);
+  const [user,      setUser]      = useState<AuthUser | null>(null)
+  const [isLoading, setIsLoading] = useState(true)   // checking token on mount
 
-  // On app load: restore session from saved token
+  // On mount — check if there's a saved session
   useEffect(() => {
-    const token = localStorage.getItem('ems_token');
-    if (!token) { setLoading(false); return; }
-
-    authService.getProfile()
-      .then(profile => {
-        setUser({ ...profile, token });
-      })
-      .catch(() => {
-        localStorage.removeItem('ems_token'); // stale token
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
-  const login = useCallback(async (creds: LoginCredentials) => {
-    setLoginLoading(true);
-    setError(null);
-    try {
-      const authUser = await authService.login(creds);
-      localStorage.setItem('ems_token', authUser.token);
-      setUser(authUser);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
-      throw err; // re-throw so the form can handle it
-    } finally {
-      setLoginLoading(false);
+    const token = authService.getToken()
+    if (!token) {
+      setIsLoading(false)
+      return
     }
-  }, []);
+    // In production: verify token with server
+    // authService.getProfile()
+    //   .then(setUser)
+    //   .catch(() => authService.removeToken())
+    //   .finally(() => setIsLoading(false))
 
-  const logout = useCallback(() => {
-    localStorage.removeItem('ems_token');
-    setUser(null);
-    setError(null);
-  }, []);
+    // For mock: just clear loading
+    setIsLoading(false)
+  }, [])
 
-  const clearError = useCallback(() => setError(null), []);
+  const login = async (credentials: LoginCredentials) => {
+    const loggedInUser = await authService.login(credentials)
+    authService.saveToken(loggedInUser.token)
+    setUser(loggedInUser)
+  }
+
+  const logout = async () => {
+    await authService.logout()
+    authService.removeToken()
+    setUser(null)
+  }
 
   return (
     <AuthContext.Provider value={{
       user,
-      loading,
-      loginLoading,
-      error,
+      isLoading,
       login,
       logout,
       isAuthenticated: !!user,
       isAdmin:         user?.role === 'admin',
-      clearError,
     }}>
       {children}
     </AuthContext.Provider>
-  );
+  )
 }
 
 export function useAuth(): AuthContextValue {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be inside <AuthProvider>');
-  return ctx;
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>')
+  return ctx
 }
 ```
 
 ```tsx
 // src/main.tsx — add AuthProvider
-<Provider store={store}>
-  <BrowserRouter>
-    <ThemeProvider>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
-    </ThemeProvider>
-  </BrowserRouter>
-</Provider>
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <Provider store={store}>
+      <BrowserRouter>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </BrowserRouter>
+    </Provider>
+  </StrictMode>
+)
 ```
 
 ---
@@ -222,402 +204,238 @@ export function useAuth(): AuthContextValue {
 
 ```tsx
 // src/pages/LoginPage.tsx
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import styles from './LoginPage.module.css';
+import { useState } from 'react'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 function LoginPage() {
-  const navigate  = useNavigate();
-  const location  = useLocation();
-  const { login, loginLoading, error, clearError, isAuthenticated } = useAuth();
+  const { login, isAuthenticated } = useAuth()
+  const navigate  = useNavigate()
+  const location  = useLocation()
 
-  const [email,    setEmail]    = useState('');
-  const [password, setPassword] = useState('');
-  const [showPw,   setShowPw]   = useState(false);
+  const [email,    setEmail]    = useState('')
+  const [password, setPassword] = useState('')
+  const [error,    setError]    = useState<string | null>(null)
+  const [loading,  setLoading]  = useState(false)
 
-  // Where to redirect after login
-  const from = (location.state as any)?.from?.pathname ?? '/employees';
-
-  // Already logged in?
-  useEffect(() => {
-    if (isAuthenticated) navigate(from, { replace: true });
-  }, [isAuthenticated, from, navigate]);
+  // Already logged in → redirect
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname ?? '/'
+  if (isAuthenticated) {
+    navigate(from, { replace: true })
+    return null
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
+
     try {
-      await login({ email, password });
-      navigate(from, { replace: true });
-    } catch {
-      // error is already set in AuthContext
+      await login({ email, password })
+      navigate(from, { replace: true })   // go to originally requested page
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed')
+    } finally {
+      setLoading(false)
     }
-  };
+  }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.card}>
+    <div>
+      <h1>Sign in to IBM EMS</h1>
 
-        <div className={styles.logo}>
-          <span className={styles.logoIcon}>🏢</span>
-          <h1 className={styles.logoText}>IBM EMS</h1>
-        </div>
+      <form onSubmit={handleSubmit} noValidate>
+        <label htmlFor="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          placeholder="admin@ibm.com"
+          autoComplete="email"
+          required
+        />
 
-        <h2 className={styles.heading}>Sign in to your account</h2>
+        <label htmlFor="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          placeholder="••••••••"
+          autoComplete="current-password"
+          required
+        />
 
-        {error && (
-          <div className={styles.errorBanner} role="alert">
-            <span>⚠️ {error}</span>
-            <button onClick={clearError} className={styles.dismissBtn} aria-label="Dismiss error">×</button>
-          </div>
-        )}
+        {error && <p role="alert">{error}</p>}
 
-        <form onSubmit={handleSubmit} className={styles.form} noValidate>
+        <button type="submit" disabled={loading || !email || !password}>
+          {loading ? 'Signing in…' : 'Sign In'}
+        </button>
+      </form>
 
-          <div className={styles.field}>
-            <label htmlFor="email" className={styles.label}>Email address</label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className={styles.input}
-              placeholder="you@ibm.com"
-              autoComplete="email"
-              autoFocus
-              required
-            />
-          </div>
-
-          <div className={styles.field}>
-            <label htmlFor="password" className={styles.label}>Password</label>
-            <div className={styles.pwWrapper}>
-              <input
-                id="password"
-                type={showPw ? 'text' : 'password'}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                className={styles.input}
-                placeholder="••••••••"
-                autoComplete="current-password"
-                required
-              />
-              <button
-                type="button"
-                className={styles.showPwBtn}
-                onClick={() => setShowPw(v => !v)}
-                tabIndex={-1}
-              >
-                {showPw ? '🙈' : '👁️'}
-              </button>
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            className={styles.submitBtn}
-            disabled={loginLoading || !email || !password}
-          >
-            {loginLoading ? 'Signing in…' : 'Sign In'}
-          </button>
-
-        </form>
-
-        {/* Demo credentials hint */}
-        <div className={styles.demoHint}>
-          <p>Demo credentials:</p>
-          <div className={styles.demoRow}>
-            <code>admin@ibm.com / admin123</code>
-            <button onClick={() => { setEmail('admin@ibm.com'); setPassword('admin123'); }}
-              className={styles.fillBtn}>Fill</button>
-          </div>
-          <div className={styles.demoRow}>
-            <code>user@ibm.com / user123</code>
-            <button onClick={() => { setEmail('user@ibm.com'); setPassword('user123'); }}
-              className={styles.fillBtn}>Fill</button>
-          </div>
-        </div>
-
-      </div>
+      <p>
+        Demo credentials: <code>admin@ibm.com</code> / <code>admin123</code>
+      </p>
     </div>
-  );
-}
-export default LoginPage;
-```
-
-```css
-/* src/pages/LoginPage.module.css */
-.page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #0043ce 0%, #001141 100%);
-  padding: var(--space-5);
-}
-.card {
-  background: white;
-  border-radius: var(--radius-lg);
-  padding: var(--space-8);
-  width: 100%; max-width: 400px;
-  box-shadow: 0 24px 48px rgba(0,0,0,0.3);
-}
-.logo {
-  display: flex; align-items: center;
-  gap: var(--space-2); margin-bottom: var(--space-6);
-}
-.logoIcon { font-size: 32px; }
-.logoText  { font-size: var(--font-size-xl); font-weight: 700; }
-.heading   { font-size: var(--font-size-lg); font-weight: 600; margin-bottom: var(--space-5); }
-
-.errorBanner {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-sm);
-  background: var(--color-danger-bg);
-  color: var(--color-danger);
-  margin-bottom: var(--space-4);
-  font-size: var(--font-size-sm);
-  border-left: 4px solid var(--color-danger);
-}
-.dismissBtn { background: none; border: none; color: inherit; font-size: 18px; cursor: pointer; padding: 0; }
-
-.form  { display: flex; flex-direction: column; gap: var(--space-4); }
-.field { display: flex; flex-direction: column; gap: var(--space-1); }
-.label { font-size: var(--font-size-sm); font-weight: 600; color: var(--color-gray-700); }
-.input {
-  padding: var(--space-3) var(--space-3);
-  border: 1.5px solid var(--color-gray-300);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-md);
-  width: 100%;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-.input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-light);
-}
-.pwWrapper { position: relative; }
-.pwWrapper .input { padding-right: 44px; }
-.showPwBtn {
-  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-  background: none; border: none; cursor: pointer; font-size: 18px;
+  )
 }
 
-.submitBtn {
-  padding: var(--space-3);
-  background: var(--color-primary);
-  color: white; border: none;
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-md);
-  font-weight: 700;
-  transition: background 0.15s;
-  margin-top: var(--space-2);
-}
-.submitBtn:hover:not(:disabled) { background: var(--color-primary-dark); }
-.submitBtn:disabled { background: var(--color-gray-300); cursor: not-allowed; }
-
-.demoHint {
-  margin-top: var(--space-6);
-  padding: var(--space-3);
-  background: var(--color-gray-100);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
-  color: var(--color-gray-700);
-}
-.demoHint p { font-weight: 600; margin-bottom: var(--space-2); }
-.demoRow    { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
-.fillBtn    { font-size: 11px; padding: 2px 8px; background: var(--color-primary); color: white; border: none; border-radius: 3px; cursor: pointer; }
+export default LoginPage
 ```
 
 ---
 
-## 12.5 Protected Route Component
+## 12.5 Protected Route
 
 ```tsx
 // src/components/ProtectedRoute.tsx
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
-interface Props {
-  children: React.ReactNode;
-  adminOnly?: boolean;
+interface ProtectedRouteProps {
+  requireAdmin?: boolean
 }
 
-function ProtectedRoute({ children, adminOnly = false }: Props) {
-  const { isAuthenticated, isAdmin, loading } = useAuth();
-  const location = useLocation();
+function ProtectedRoute({ requireAdmin = false }: ProtectedRouteProps) {
+  const { isAuthenticated, isAdmin, isLoading } = useAuth()
+  const location = useLocation()
 
-  // Still restoring session — show nothing (prevents flash of login page)
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-        <p>Restoring session…</p>
-      </div>
-    );
-  }
+  // Still checking token on mount — don't redirect yet
+  if (isLoading) return <p>Loading…</p>
 
+  // Not logged in
   if (!isAuthenticated) {
-    // Save current location so we can redirect back after login
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  if (adminOnly && !isAdmin) {
-    return <Navigate to="/403" replace />;
+  // Logged in but not admin when admin is required
+  if (requireAdmin && !isAdmin) {
+    return <Navigate to="/unauthorized" replace />
   }
 
-  return <>{children}</>;
+  return <Outlet />
 }
-export default ProtectedRoute;
+
+export default ProtectedRoute
+```
+
+```tsx
+// src/App.tsx — use in route config
+<Routes>
+  <Route path="/" element={<Layout />}>
+    <Route index element={<HomePage />} />
+    <Route path="employees" element={<EmployeesPage />} />
+    <Route path="employees/:id" element={<EmployeeDetailPage />} />
+    <Route path="login" element={<LoginPage />} />
+
+    {/* Requires login */}
+    <Route element={<ProtectedRoute />}>
+      <Route path="employees/create"    element={<CreateEmployeePage />} />
+      <Route path="employees/:id/edit"  element={<EditEmployeePage />} />
+    </Route>
+
+    {/* Requires admin role */}
+    <Route element={<ProtectedRoute requireAdmin />}>
+      <Route path="admin/departments"   element={<DepartmentsAdminPage />} />
+    </Route>
+
+    <Route path="*" element={<NotFoundPage />} />
+  </Route>
+</Routes>
 ```
 
 ---
 
-## 12.6 Updated App Router with Auth
+## 12.6 Role-Based UI
 
 ```tsx
-// src/App.tsx
-import { Routes, Route, Navigate } from 'react-router-dom';
-import Layout from './components/layout/Layout';
-import ProtectedRoute from './components/ProtectedRoute';
-import LoginPage from './pages/LoginPage';
-import HomePage from './pages/HomePage';
-import EmployeesPage from './pages/EmployeesPage';
-import EmployeeDetailPage from './pages/EmployeeDetailPage';
-import CreateEmployeePage from './pages/CreateEmployeePage';
-import NotFoundPage from './pages/NotFoundPage';
+// Show/hide UI based on role
+import { useAuth } from '../context/AuthContext'
 
-function App() {
-  return (
-    <Routes>
-      {/* Public */}
-      <Route path="/login" element={<LoginPage />} />
-
-      {/* Protected — all inside Layout */}
-      <Route path="/" element={
-        <ProtectedRoute>
-          <Layout />
-        </ProtectedRoute>
-      }>
-        <Route index element={<HomePage />} />
-        <Route path="employees" element={<EmployeesPage />} />
-        <Route path="employees/new" element={<CreateEmployeePage />} />
-        <Route path="employees/:id" element={<EmployeeDetailPage />} />
-
-        {/* Admin-only */}
-        <Route path="admin" element={
-          <ProtectedRoute adminOnly>
-            <div><h1>Admin Panel</h1></div>
-          </ProtectedRoute>
-        } />
-
-        <Route path="*" element={<NotFoundPage />} />
-      </Route>
-    </Routes>
-  );
-}
-export default App;
-```
-
----
-
-## 12.7 User Menu in Navbar
-
-```tsx
-// src/components/layout/UserMenu.tsx
-import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { useOnClickOutside } from '../../hooks/useOnClickOutside';
-import styles from './UserMenu.module.css';
-
-function UserMenu() {
-  const { user, logout, isAdmin } = useAuth();
-  const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useOnClickOutside(menuRef, () => setOpen(false));
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
-  if (!user) return null;
-
-  const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+function EmployeeCard({ employee, onRemove }: Props) {
+  const { isAdmin, user } = useAuth()
 
   return (
-    <div className={styles.wrapper} ref={menuRef}>
-      <button className={styles.avatar} onClick={() => setOpen(o => !o)} aria-label="Open user menu">
-        {initials}
-      </button>
+    <div>
+      <h3>{employee.name}</h3>
+      <p>{employee.department}</p>
 
-      {open && (
-        <div className={styles.dropdown}>
-          <div className={styles.userInfo}>
-            <p className={styles.userName}>{user.name}</p>
-            <p className={styles.userEmail}>{user.email}</p>
-            {isAdmin && <span className={styles.adminBadge}>Admin</span>}
-          </div>
-          <hr className={styles.divider} />
-          {isAdmin && (
-            <button className={styles.item} onClick={() => { navigate('/admin'); setOpen(false); }}>
-              ⚙️ Admin Panel
-            </button>
-          )}
-          <button className={styles.item} onClick={handleLogout}>
-            🚪 Sign Out
-          </button>
-        </div>
+      {/* Only admins can delete */}
+      {isAdmin && (
+        <button onClick={() => onRemove(employee.id)}>Delete</button>
+      )}
+
+      {/* Managers and admins can edit */}
+      {(user?.role === 'admin' || user?.role === 'manager') && (
+        <Link to={`/employees/${employee.id}/edit`}>Edit</Link>
+      )}
+
+      {/* Users can view their own profile */}
+      {user?.id === employee.id && (
+        <span>That's you!</span>
       )}
     </div>
-  );
+  )
 }
-export default UserMenu;
 ```
 
 ---
 
-## 12.8 `useOnClickOutside` Hook
+## 12.7 Logout
 
-```ts
-// src/hooks/useOnClickOutside.ts
-import { useEffect, RefObject } from 'react';
+```tsx
+// Anywhere in the nav — the logout button
+import { useAuth } from '../context/AuthContext'
+import { useNavigate } from 'react-router-dom'
 
-export function useOnClickOutside(
-  ref: RefObject<HTMLElement | null>,
-  handler: () => void
-) {
-  useEffect(() => {
-    const listener = (e: MouseEvent | TouchEvent) => {
-      if (!ref.current || ref.current.contains(e.target as Node)) return;
-      handler();
-    };
-    document.addEventListener('mousedown', listener);
-    document.addEventListener('touchstart', listener);
-    return () => {
-      document.removeEventListener('mousedown', listener);
-      document.removeEventListener('touchstart', listener);
-    };
-  }, [ref, handler]);
+function NavBar() {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    await logout()
+    navigate('/login', { replace: true })
+  }
+
+  return (
+    <nav>
+      <span>IBM EMS</span>
+      {user
+        ? (
+          <>
+            <span>Hello, {user.name}</span>
+            <button onClick={handleLogout}>Sign Out</button>
+          </>
+        )
+        : <Link to="/login">Sign In</Link>
+      }
+    </nav>
+  )
 }
 ```
+
+---
+
+## 12.8 Token Storage — Security Note
+
+| Storage | XSS risk | CSRF risk | Accessible in JS |
+|---------|----------|-----------|-----------------|
+| `localStorage` | ⚠️ Yes | ✅ No | Yes |
+| `sessionStorage` | ⚠️ Yes | ✅ No | Yes |
+| `httpOnly` cookie | ✅ No | ⚠️ Yes (mitigated) | No |
+
+**For this training:** `localStorage` is fine for learning and demos.  
+**For production:** store JWT in an `httpOnly` cookie — inaccessible to JavaScript, protects against XSS.
 
 ---
 
 ## Summary
 
-| Topic | Key Point |
-|-------|-----------|
-| Token storage | `localStorage` (simple) or `httpOnly cookie` (production) |
-| Session restore | `useEffect` on mount → call `/auth/me` with saved token |
-| AuthContext | `user`, `login`, `logout`, `isAuthenticated`, `isAdmin` |
-| ProtectedRoute | Check `isAuthenticated` → redirect to `/login` with `from` state |
-| Redirect after login | `navigate(from, { replace: true })` |
-| Token in requests | Axios request interceptor adds `Authorization: Bearer <token>` |
-| Mock auth | `mockAuthService` — no backend required for development |
+- Auth state lives in Context (or Redux `authSlice`) — not component state
+- `ProtectedRoute` uses `<Outlet />` — same pattern as layout routes
+- Save `location` before redirect so you can bounce users back after login
+- Role-based UI: check `user.role` in components, not just in routes
+- Always call `e.preventDefault()` in the login form handler
 
-**Next → [Module 13: Testing](./13-testing.md)**
+**Next → Module 13: Testing**

@@ -1,761 +1,384 @@
 # Module 05 — Styling React Components
 
 ## Learning Objectives
-- Use all four main styling approaches in React
-- Understand CSS Modules — scoping, composition, TypeScript support
-- Set up CSS custom properties (variables) for a design system
-- Apply to EMS: migrate from inline styles to a proper CSS Module layout
+- Understand every styling approach available in React
+- Know when to use each approach
+- Apply global CSS, CSS Modules, and dynamic class names
+- EMS: structured, theme-ready styling without any CSS-in-JS library
 
 ---
 
-## 5.1 The Four Approaches
+## 5.1 Four Approaches — Quick Comparison
 
-| Approach | Scoped | Dynamic | Pseudo-selectors | Recommended for |
-|----------|--------|---------|-----------------|----------------|
-| Inline styles | ✅ | ✅ | ❌ | Quick prototypes, truly dynamic values |
-| CSS Modules | ✅ | Limited | ✅ | **Production apps (our choice)** |
-| Global CSS | ❌ | ❌ | ✅ | Resets, variables, utility classes |
-| Tailwind CSS | ✅ | ✅ | ✅ | Utility-first teams |
+| Approach | Scope | Dynamic | Setup |
+|----------|-------|---------|-------|
+| Global CSS | Global (all files) | Via class toggling | Zero |
+| CSS Modules | Per-component | Via class toggling | Zero (Vite supports it) |
+| Inline styles | Per-element | Direct JS values | Zero |
+| CSS-in-JS (styled-components, Emotion) | Per-component | Full JS | Install library |
 
----
-
-## 5.2 Inline Styles
-
-Already used in previous modules. Quick recap:
-
-```tsx
-// Styles as a JS object — camelCase properties
-<div style={{ backgroundColor: '#0062ff', color: 'white', padding: '16px' }}>
-
-// Separate style object — good for reuse within a file
-const cardStyle: React.CSSProperties = {
-  border: '1px solid #e0e0e0',
-  borderRadius: '8px',
-  padding: '20px',
-  background: 'white',
-};
-<div style={cardStyle}>
-
-// Dynamic values — inline styles shine here
-<div style={{ opacity: isLoading ? 0.5 : 1, pointerEvents: isLoading ? 'none' : 'auto' }}>
-```
-
-**Limitations:** No `:hover`, no media queries, no `::before`/`::after`, verbose.
+For the IBM training we focus on **Global CSS + CSS Modules** — production-ready, zero dependencies, supported by Vite out of the box.
 
 ---
 
-## 5.3 CSS Modules
+## 5.2 Global CSS
 
-CSS Modules scope class names to the component that imports them. Two components can use the same class name `.card` without colliding.
-
-### How it works
-
-```
-EmployeeCard.module.css
-  .card { ... }      →  compiled to  →   .card_a7x3f { ... }
-
-Header.module.css
-  .card { ... }      →  compiled to  →   .card_9qs2m { ... }
-```
-
-The hash suffix is generated at build time — completely automatic.
-
-### Setup (already works in Vite — zero config)
-
-Just name your file `ComponentName.module.css` and import it.
-
----
-
-## 5.4 EMS Design System — Global Variables
-
-First, set up your design tokens in `index.css`:
+Imported in `main.tsx` — applies everywhere.
 
 ```css
 /* src/index.css */
 
-/* ── Reset ── */
+/* Reset */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-/* ── Design tokens (CSS custom properties) ── */
+/* Design tokens as CSS custom properties */
 :root {
-  /* Brand colours */
-  --color-primary:         #0062ff;
-  --color-primary-dark:    #0043ce;
-  --color-primary-light:   #d0e2ff;
+  --color-primary:    #0062ff;
+  --color-danger:     #da1e28;
+  --color-success:    #24a148;
+  --color-text:       #161616;
+  --color-text-muted: #525252;
+  --color-border:     #e0e0e0;
+  --color-bg:         #f4f4f4;
+  --color-surface:    #ffffff;
 
-  /* Neutral palette */
-  --color-gray-900:  #161616;
-  --color-gray-700:  #525252;
-  --color-gray-500:  #8d8d8d;
-  --color-gray-300:  #c6c6c6;
-  --color-gray-100:  #f4f4f4;
-  --color-white:     #ffffff;
-
-  /* Semantic */
-  --color-success:   #24a148;
-  --color-success-bg:#defbe6;
-  --color-danger:    #da1e28;
-  --color-danger-bg: #fff1f1;
-  --color-warning:   #f1c21b;
-  --color-warning-bg:#fdf6d0;
-
-  /* Typography */
-  --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont,
-    'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
-
-  --font-size-xs:  11px;
-  --font-size-sm:  13px;
-  --font-size-md:  16px;
-  --font-size-lg:  20px;
-  --font-size-xl:  24px;
-  --font-size-2xl: 32px;
-
-  /* Spacing */
-  --space-1:  4px;
-  --space-2:  8px;
-  --space-3:  12px;
-  --space-4:  16px;
-  --space-5:  20px;
-  --space-6:  24px;
-  --space-8:  32px;
-  --space-12: 48px;
-
-  /* Borders */
   --radius-sm: 4px;
   --radius-md: 8px;
-  --radius-lg: 16px;
-  --radius-full: 9999px;
-  --border-color: #e0e0e0;
+  --radius-pill: 999px;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,0.16);
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  --font-sm: 13px;
+  --font-md: 14px;
+  --font-base: 16px;
+  --font-lg: 18px;
 }
 
-/* ── Base ── */
 body {
-  font-family: var(--font-sans);
-  font-size: var(--font-size-md);
-  color: var(--color-gray-900);
-  background-color: var(--color-gray-100);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: var(--font-base);
+  color: var(--color-text);
+  background: var(--color-bg);
   line-height: 1.6;
 }
 
-a {
-  color: var(--color-primary);
-  text-decoration: none;
-}
-a:hover { text-decoration: underline; }
+/* Utility classes — use these in JSX className */
+.container { max-width: 1100px; margin: 0 auto; padding: var(--space-lg); }
+.card      { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-md); }
+.grid      { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-md); }
+.flex      { display: flex; gap: var(--space-sm); align-items: center; }
+.badge     { display: inline-block; padding: 2px 10px; border-radius: var(--radius-pill); font-size: var(--font-sm); font-weight: 600; }
+.badge--active   { background: #defbe6; color: #0e6027; }
+.badge--inactive { background: #fff1f1; color: #a2191f; }
+.btn       { padding: var(--space-sm) var(--space-md); border: none; border-radius: var(--radius-sm); cursor: pointer; font-size: var(--font-md); font-weight: 600; }
+.btn--primary { background: var(--color-primary); color: #fff; }
+.btn--danger  { background: var(--color-danger); color: #fff; }
+.btn--ghost   { background: transparent; border: 1px solid var(--color-border); color: var(--color-text); }
+.text-muted   { color: var(--color-text-muted); font-size: var(--font-md); }
+.mb-md { margin-bottom: var(--space-md); }
+.mb-lg { margin-bottom: var(--space-lg); }
+```
 
-button {
-  font-family: var(--font-sans);
-  cursor: pointer;
-}
+Usage:
 
-/* ── Utility classes ── */
-.visually-hidden {
-  position: absolute;
-  width: 1px; height: 1px;
-  padding: 0; margin: -1px;
-  overflow: hidden;
-  clip: rect(0,0,0,0);
-  white-space: nowrap;
-  border-width: 0;
-}
+```tsx
+<div className="container">
+  <div className="grid">
+    {employees.map(emp => (
+      <div key={emp.id} className="card">
+        <h3>{emp.name}</h3>
+        <span className={`badge ${emp.isActive ? 'badge--active' : 'badge--inactive'}`}>
+          {emp.isActive ? 'Active' : 'Inactive'}
+        </span>
+      </div>
+    ))}
+  </div>
+</div>
 ```
 
 ---
 
-## 5.5 Refactoring EMS with CSS Modules
+## 5.3 CSS Modules
 
-### `src/components/EmployeeCard.module.css`
+A CSS Module is a `.module.css` file where every class name is **automatically scoped** to the component that imports it. No class name collisions across the whole codebase.
 
 ```css
-/* EmployeeCard.module.css */
+/* src/components/EmployeeCard.module.css */
 
 .card {
-  background: var(--color-white);
-  border: 1px solid var(--border-color);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  padding: var(--space-5);
+  padding: var(--space-md);
   position: relative;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition: box-shadow 0.2s;
 }
 
 .card:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.name {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  margin-bottom: var(--space-xs);
+}
+
+.meta {
+  color: var(--color-text-muted);
+  font-size: var(--font-md);
+  margin: 2px 0;
+}
+
+.salary {
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-top: var(--space-sm);
 }
 
 .removeBtn {
   position: absolute;
-  top: var(--space-3);
-  right: var(--space-3);
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-full);
+  top: var(--space-sm);
+  right: var(--space-sm);
+  background: none;
   border: none;
-  background: transparent;
-  color: var(--color-gray-500);
+  cursor: pointer;
+  color: var(--color-text-muted);
   font-size: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   line-height: 1;
-  transition: background 0.15s, color 0.15s;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
 }
 
 .removeBtn:hover {
-  background: var(--color-danger-bg);
   color: var(--color-danger);
-}
-
-.name {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  color: var(--color-gray-900);
-  margin-bottom: var(--space-1);
-  padding-right: var(--space-8);  /* room for remove button */
-}
-
-.meta {
-  font-size: var(--font-size-sm);
-  color: var(--color-gray-700);
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin-top: var(--space-1);
-}
-
-.salary {
-  font-size: var(--font-size-md);
-  font-weight: 700;
-  color: var(--color-primary);
-  margin-top: var(--space-3);
-}
-
-.footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: var(--space-3);
-}
-
-/* Status badge */
-.badge {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: var(--radius-full);
-  font-size: var(--font-size-xs);
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-.badgeActive {
-  background: var(--color-success-bg);
-  color: var(--color-success);
-}
-
-.badgeInactive {
-  background: var(--color-danger-bg);
-  color: var(--color-danger);
+  background: #fff1f1;
 }
 ```
 
-### `src/components/EmployeeCard.tsx` — using modules
-
 ```tsx
-import { Employee } from '../types';
-import styles from './EmployeeCard.module.css';
+// src/components/EmployeeCard.tsx
+import styles from './EmployeeCard.module.css'
+import type { Employee } from '../types'
 
 interface EmployeeCardProps {
-  employee: Employee;
-  onRemove: (id: number) => void;
+  employee: Employee
+  onRemove: (id: number) => void
 }
 
 function EmployeeCard({ employee, onRemove }: EmployeeCardProps) {
-  const joinYear = new Date(employee.joinDate).getFullYear();
-
   return (
     <div className={styles.card}>
       <button
         className={styles.removeBtn}
         onClick={() => onRemove(employee.id)}
         aria-label={`Remove ${employee.name}`}
-        title="Remove employee"
       >
-        ×
+        ✕
       </button>
 
       <h3 className={styles.name}>{employee.name}</h3>
-
-      <p className={styles.meta}>📧 {employee.email}</p>
-      <p className={styles.meta}>🏢 {employee.department}</p>
-      <p className={styles.meta}>📅 Since {joinYear}</p>
-
+      <p className={styles.meta}>{employee.department}</p>
+      <p className={styles.meta}>{employee.email}</p>
+      <p className={styles.meta}>
+        Joined {new Date(employee.joinDate).toLocaleDateString()}
+      </p>
       <p className={styles.salary}>${employee.salary.toLocaleString()} / yr</p>
 
-      <div className={styles.footer}>
-        <span className={`${styles.badge} ${employee.isActive ? styles.badgeActive : styles.badgeInactive}`}>
-          {employee.isActive ? 'Active' : 'Inactive'}
-        </span>
-      </div>
+      <span className={`badge ${employee.isActive ? 'badge--active' : 'badge--inactive'}`}>
+        {employee.isActive ? 'Active' : 'Inactive'}
+      </span>
     </div>
-  );
+  )
 }
 
-export default EmployeeCard;
+export default EmployeeCard
 ```
 
-### Using CSS Modules — key points
+What Vite generates behind the scenes:
 
-```tsx
-import styles from './MyComponent.module.css';
-
-// Single class
-<div className={styles.card}>
-
-// Multiple classes
-<div className={`${styles.card} ${styles.highlighted}`}>
-
-// Conditional class
-<span className={`${styles.badge} ${active ? styles.badgeActive : styles.badgeInactive}`}>
+```html
+<!-- The actual class name in the DOM is hashed — no collisions possible -->
+<div class="EmployeeCard_card__3xKp1">
 ```
 
 ---
 
-## 5.6 `clsx` — Cleaner Conditional Classes
+## 5.4 Dynamic Class Names
 
-The backtick template approach gets messy fast. `clsx` is a tiny utility:
+Three ways to combine class names conditionally:
+
+```tsx
+// 1. Template literal — simple cases
+<span className={`badge ${emp.isActive ? 'badge--active' : 'badge--inactive'}`}>
+
+// 2. Array join — multiple conditionals
+<button
+  className={[
+    styles.btn,
+    isLoading ? styles.loading : '',
+    disabled ? styles.disabled : '',
+  ].filter(Boolean).join(' ')}
+>
+
+// 3. clsx (lightweight library — recommended for complex cases)
+// npm install clsx
+import clsx from 'clsx'
+
+<button
+  className={clsx(
+    styles.btn,
+    styles.btnPrimary,
+    { [styles.loading]: isLoading },
+    { [styles.disabled]: disabled }
+  )}
+>
+
+// clsx with global utilities
+<div className={clsx('card', styles.employeeCard, { [styles.selected]: isSelected })}>
+```
+
+Install clsx:
 
 ```bash
 npm install clsx
 ```
 
-```tsx
-import clsx from 'clsx';
+---
 
-// Before:
-<span className={`${styles.badge} ${active ? styles.badgeActive : styles.badgeInactive} ${large ? styles.badgeLg : ''}`}>
+## 5.5 Inline Styles — When to Use
 
-// After:
-<span className={clsx(
-  styles.badge,
-  active ? styles.badgeActive : styles.badgeInactive,
-  large && styles.badgeLg,
-)}>
-```
-
-`clsx` accepts:
-- Strings → included as-is
-- `undefined/null/false` → ignored
-- Objects `{ className: condition }` → included when condition is truthy
+Inline styles in React use a JavaScript object with camelCase properties. Use them only for **values that change at runtime** and can't be predetermined in a CSS file.
 
 ```tsx
-clsx(
-  'base-class',
-  { 'active': isActive, 'disabled': isDisabled },
-  isLarge && 'large',
-  maybeUndefined,          // silently ignored
-)
+// Good use: value computed at runtime
+<div style={{ width: `${progress}%` }}>
+<div style={{ color: employee.departmentColor }}>
+<div style={{ transform: `rotate(${angle}deg)` }}>
+
+// Bad use: static values (put these in CSS)
+<div style={{ fontSize: '14px', color: '#525252' }}>  // ❌ use a class instead
 ```
+
+Note: CSS custom properties do NOT work in inline style objects. Use a CSS class and `var(--token)` for design tokens.
 
 ---
 
-## 5.7 App Layout — CSS Modules
+## 5.6 Conditional Classes with CSS Modules
+
+```tsx
+// src/components/FilterButton.tsx
+import styles from './FilterButton.module.css'
+
+interface FilterButtonProps {
+  label: string
+  isActive: boolean
+  onClick: () => void
+}
+
+function FilterButton({ label, isActive, onClick }: FilterButtonProps) {
+  return (
+    <button
+      className={clsx(styles.filterBtn, { [styles.active]: isActive })}
+      onClick={onClick}
+    >
+      {label}
+    </button>
+  )
+}
+```
 
 ```css
-/* src/App.module.css */
-
-.page {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.header {
-  background: var(--color-gray-900);
-  color: var(--color-white);
-  padding: var(--space-4) var(--space-6);
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-}
-
-.headerTitle {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-.main {
-  flex: 1;
-  padding: var(--space-6);
-  max-width: 1200px;
-  width: 100%;
-  margin: 0 auto;
-}
-
-/* Stats strip */
-.statsStrip {
-  display: flex;
-  gap: var(--space-4);
-  margin-bottom: var(--space-8);
-}
-
-.statCard {
-  background: var(--color-white);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: var(--space-4) var(--space-5);
-  text-align: center;
-  min-width: 100px;
-}
-
-.statValue {
-  font-size: var(--font-size-2xl);
-  font-weight: 700;
-  color: var(--color-primary);
-  line-height: 1;
-  margin-bottom: var(--space-1);
-}
-
-.statLabel {
-  font-size: var(--font-size-sm);
-  color: var(--color-gray-700);
-}
-
-/* Filter bar */
-.filterBar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  margin-bottom: var(--space-4);
-}
-
+/* FilterButton.module.css */
 .filterBtn {
-  padding: 5px 16px;
-  border-radius: var(--radius-full);
-  border: 1.5px solid var(--color-primary);
+  padding: 6px 16px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-pill);
   background: transparent;
   color: var(--color-primary);
-  font-size: var(--font-size-sm);
+  cursor: pointer;
+  font-size: var(--font-sm);
   font-weight: 500;
-  transition: background 0.15s, color 0.15s;
 }
 
-.filterBtn:hover {
-  background: var(--color-primary-light);
-}
-
-.filterBtnActive {
+.filterBtn.active {
   background: var(--color-primary);
-  color: var(--color-white);
+  color: #fff;
+  font-weight: 700;
 }
-
-/* Quick add */
-.addBar {
-  display: flex;
-  gap: var(--space-2);
-  margin-bottom: var(--space-6);
-  padding: var(--space-4);
-  background: var(--color-white);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-}
-
-.addInput {
-  flex: 1;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-gray-300);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-md);
-  font-family: var(--font-sans);
-  outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-
-.addInput:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-light);
-}
-
-.addSelect {
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-gray-300);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-md);
-  background: white;
-}
-
-.addBtn {
-  padding: var(--space-2) var(--space-5);
-  background: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-md);
-  font-weight: 600;
-  transition: background 0.15s;
-}
-
-.addBtn:hover:not(:disabled) {
-  background: var(--color-primary-dark);
-}
-
-.addBtn:disabled {
-  background: var(--color-gray-300);
-  cursor: not-allowed;
-}
-
-/* Grid */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-  gap: var(--space-4);
-}
-
-/* Empty state */
-.emptyState {
-  text-align: center;
-  padding: 60px var(--space-6);
-  border: 2px dashed var(--border-color);
-  border-radius: var(--radius-md);
-  color: var(--color-gray-700);
-}
-
-.emptyIcon {
-  font-size: 48px;
-  margin-bottom: var(--space-3);
-}
-
-.emptyTitle {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  margin-bottom: var(--space-2);
-}
-
-.resultInfo {
-  font-size: var(--font-size-sm);
-  color: var(--color-gray-700);
-  margin-bottom: var(--space-4);
-}
-
-/* Responsive */
-@media (max-width: 600px) {
-  .statsStrip { flex-wrap: wrap; }
-  .addBar { flex-wrap: wrap; }
-  .addInput { min-width: 100%; }
-}
-```
-
-### `src/App.tsx` — styled version
-
-```tsx
-import { useState, useMemo } from 'react';
-import clsx from 'clsx';
-import EmployeeCard from './components/EmployeeCard';
-import { INITIAL_EMPLOYEES } from './data/employees';
-import { Employee, Department } from './types';
-import styles from './App.module.css';
-
-let nextId = INITIAL_EMPLOYEES.length + 1;
-const DEPARTMENTS: Department[] = ['All', 'Engineering', 'Marketing', 'HR', 'Finance', 'Sales'];
-
-function App() {
-  const [employees, setEmployees] = useState<Employee[]>(INITIAL_EMPLOYEES);
-  const [filter, setFilter]       = useState<Department>('All');
-  const [showInactive, setShowInactive] = useState(true);
-  const [newName, setNewName]     = useState('');
-  const [newDept, setNewDept]     = useState<Exclude<Department,'All'>>('Engineering');
-
-  const filtered = useMemo(() =>
-    employees
-      .filter(e => filter === 'All' || e.department === filter)
-      .filter(e => showInactive || e.isActive),
-    [employees, filter, showInactive]
-  );
-
-  const handleRemove = (id: number) =>
-    setEmployees(prev => prev.filter(e => e.id !== id));
-
-  const handleAdd = () => {
-    if (!newName.trim()) return;
-    setEmployees(prev => [...prev, {
-      id: nextId++,
-      name: newName.trim(),
-      email: `${newName.toLowerCase().replace(/\s+/g, '.')}@ibm.com`,
-      department: newDept,
-      salary: 70000,
-      isActive: true,
-      joinDate: new Date().toISOString().split('T')[0],
-    }]);
-    setNewName('');
-  };
-
-  const stats = {
-    total: employees.length,
-    active: employees.filter(e => e.isActive).length,
-    depts: new Set(employees.map(e => e.department)).size,
-  };
-
-  return (
-    <div className={styles.page}>
-
-      <header className={styles.header}>
-        <span style={{ fontSize: '24px' }}>🏢</span>
-        <span className={styles.headerTitle}>IBM Employee Management System</span>
-      </header>
-
-      <main className={styles.main}>
-
-        {/* Stats */}
-        <div className={styles.statsStrip}>
-          {[
-            { label: 'Total Employees', value: stats.total },
-            { label: 'Active', value: stats.active },
-            { label: 'Departments', value: stats.depts },
-          ].map(s => (
-            <div key={s.label} className={styles.statCard}>
-              <div className={styles.statValue}>{s.value}</div>
-              <div className={styles.statLabel}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Add bar */}
-        <div className={styles.addBar}>
-          <input
-            className={styles.addInput}
-            value={newName}
-            onChange={e => setNewName(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleAdd()}
-            placeholder="New employee name..."
-          />
-          <select
-            className={styles.addSelect}
-            value={newDept}
-            onChange={e => setNewDept(e.target.value as Exclude<Department,'All'>)}
-          >
-            {DEPARTMENTS.filter(d => d !== 'All').map(d => (
-              <option key={d}>{d}</option>
-            ))}
-          </select>
-          <button
-            className={styles.addBtn}
-            onClick={handleAdd}
-            disabled={!newName.trim()}
-          >
-            + Add Employee
-          </button>
-        </div>
-
-        {/* Filter bar */}
-        <div className={styles.filterBar}>
-          {DEPARTMENTS.map(dept => (
-            <button
-              key={dept}
-              className={clsx(styles.filterBtn, filter === dept && styles.filterBtnActive)}
-              onClick={() => setFilter(dept)}
-            >
-              {dept}
-            </button>
-          ))}
-          <label style={{ marginLeft: 'auto', fontSize: '13px', display: 'flex', gap: '6px', alignItems: 'center' }}>
-            <input
-              type="checkbox"
-              checked={showInactive}
-              onChange={e => setShowInactive(e.target.checked)}
-            />
-            Show inactive
-          </label>
-        </div>
-
-        {/* Result info */}
-        <p className={styles.resultInfo}>
-          Showing {filtered.length} of {employees.length} employees
-          {filter !== 'All' && ` · ${filter}`}
-        </p>
-
-        {/* Grid or empty state */}
-        {filtered.length > 0
-          ? (
-            <div className={styles.grid}>
-              {filtered.map(emp => (
-                <EmployeeCard key={emp.id} employee={emp} onRemove={handleRemove} />
-              ))}
-            </div>
-          )
-          : (
-            <div className={styles.emptyState}>
-              <div className={styles.emptyIcon}>🔍</div>
-              <p className={styles.emptyTitle}>No employees found</p>
-              <p>
-                {filter !== 'All'
-                  ? `No employees in ${filter}.`
-                  : 'Add your first employee above.'}
-              </p>
-            </div>
-          )
-        }
-
-      </main>
-    </div>
-  );
-}
-
-export default App;
 ```
 
 ---
 
-## 5.8 Bonus — Tailwind CSS Setup
+## 5.7 Dark Mode with CSS Custom Properties
 
-If your team prefers Tailwind:
-
-```bash
-npm install -D tailwindcss @tailwindcss/vite
-```
-
-```ts
-// vite.config.ts
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import tailwindcss from '@tailwindcss/vite';
-
-export default defineConfig({
-  plugins: [tailwindcss(), react()],
-});
-```
+Because we defined tokens in `:root`, dark mode is just overriding tokens — no JS needed.
 
 ```css
-/* src/index.css — replace with */
-@import "tailwindcss";
+/* src/index.css */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-text:    #f4f4f4;
+    --color-bg:      #161616;
+    --color-surface: #262626;
+    --color-border:  #393939;
+  }
+}
+
+/* Or toggle with a class for user-controlled dark mode */
+[data-theme='dark'] {
+  --color-text:    #f4f4f4;
+  --color-bg:      #161616;
+  --color-surface: #262626;
+  --color-border:  #393939;
+}
 ```
 
+Apply in React:
+
 ```tsx
-// Now use utility classes
-<div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
-  <h3 className="text-lg font-semibold text-gray-900">{employee.name}</h3>
-</div>
+// In your ThemeContext or App.tsx
+document.documentElement.setAttribute('data-theme', theme)
+```
+
+All components pick up the new token values automatically — no code changes needed in individual components.
+
+---
+
+## 5.8 EMS Folder Structure After Module 05
+
+```
+src/
+├── components/
+│   ├── EmployeeCard.tsx
+│   ├── EmployeeCard.module.css
+│   ├── FilterButton.tsx
+│   └── FilterButton.module.css
+├── pages/
+│   └── EmployeesPage.module.css
+├── index.css           ← global reset + tokens + utilities
+└── App.module.css
 ```
 
 ---
 
 ## Summary
 
-- **CSS Modules** scope class names to the file — no collisions
-- **Global CSS** + **CSS variables** = design tokens for the whole app
-- **`clsx`** makes conditional class names readable
-- Inline styles are fine for truly dynamic values; use CSS for everything else
+| Approach | Use for |
+|----------|---------|
+| Global CSS + custom properties | Design tokens, resets, utility classes |
+| CSS Modules | Per-component styles — zero class name collisions |
+| `clsx` | Combining/toggling multiple class names cleanly |
+| Inline styles | Runtime values only (progress bars, angles, dynamic colors) |
+| CSS-in-JS | Not covered — adds bundle weight, consider only for complex theming |
 
-**Next → [Module 06: Debugging](./06-debugging.md)**
+**Next → Module 06: Debugging React Apps**

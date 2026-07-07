@@ -1,541 +1,433 @@
-# Module 11 — Redux: Centralized State Management
+# Module 11 — Redux: Centralised State Management
 
 ## Learning Objectives
-- Understand when and why to use Redux over local state
-- Set up Redux Toolkit (RTK) — the modern, official way
-- Create slices with reducers and async thunks
+- Understand when and why to use Redux over Context + useState
+- Set up Redux Toolkit (the modern, official way)
+- Create slices, reducers, and async thunks
 - Write selectors with `createSelector`
 - Connect Redux to React components
-- Apply to EMS: migrate employee state into a Redux store
+- EMS: migrate employee state into a Redux store
 
 ---
 
 ## 11.1 When to Use Redux
 
-| State type | Where it lives |
-|-----------|---------------|
-| Local UI state (modal open, input value) | `useState` in component |
-| Shared state used by a subtree | `useState` lifted up + props / Context |
+| State type | Best location |
+|-----------|--------------|
+| Local UI state (modal open, input value) | `useState` in the component |
+| Shared state for a subtree | Lifted state + props / Context |
 | Auth state (user, token) | Context or Redux |
-| Server data (employees list) used across many pages | **Redux** |
-| Complex state with many actions | **Redux** |
-| State that needs DevTools time-travel | **Redux** |
+| Server data used across many pages (employees list) | **Redux** |
+| Complex state with many actions from many places | **Redux** |
+| State that needs time-travel debugging | **Redux** |
 
-> **Rule of thumb:** If the same data is needed on multiple pages, or if state changes come from many places, Redux is the right choice.
-
----
-
-## 11.2 Install Redux Toolkit
+> **Rule of thumb:** If you find yourself passing the same data through 3+ component layers, or the same data is needed on multiple unrelated pages, Redux is the right call.
 
 ```bash
 npm install @reduxjs/toolkit react-redux
 ```
 
-RTK is the official, opinionated toolset. It eliminates the massive boilerplate of classic Redux.
+---
+
+## 11.2 How Redux Works — One-Way Data Flow
+
+```
+User clicks "Delete Employee"
+        ↓
+Component calls dispatch(deleteEmployee(id))
+        ↓
+Redux runs employeesSlice reducer(currentState, action)
+        ↓
+Reducer returns new state (immutable update)
+        ↓
+Store saves new state
+        ↓
+React re-renders components that selected the changed state
+```
+
+This is strictly one-way — data never goes backwards.
 
 ---
 
-## 11.3 Architecture Overview
-
-```
-┌─────────────────── STORE ─────────────────────────┐
-│  state = {                                         │
-│    employees: { list, loading, error, filter },    │
-│    auth:      { user, token },                     │
-│  }                                                 │
-└────────────────────────────────────────────────────┘
-         ↑ dispatch(action)     ↓ useSelector(fn)
-┌─────────────────────────────────────────────────────┐
-│                    COMPONENTS                        │
-└─────────────────────────────────────────────────────┘
-```
-
-**Data flow is strictly one-way:**
-1. User interacts → component calls `dispatch(action)`
-2. Redux runs the relevant reducer with `(currentState, action) → newState`
-3. Store saves new state
-4. React re-renders components that select the changed state
-
----
-
-## 11.4 Store Setup
+## 11.3 Store Setup
 
 ```ts
 // src/store/index.ts
-import { configureStore } from '@reduxjs/toolkit';
-import employeesReducer from '../features/employees/employeesSlice';
-import authReducer from '../features/auth/authSlice';
+import { configureStore } from '@reduxjs/toolkit'
+import employeesReducer from '../features/employees/employeesSlice'
+import authReducer      from '../features/auth/authSlice'
 
 export const store = configureStore({
   reducer: {
     employees: employeesReducer,
-    auth: authReducer,
+    auth:      authReducer,
   },
-  // RTK includes redux-thunk by default — no extra setup needed
-});
+  // redux-thunk is included by default — no extra setup
+})
 
-// Infer RootState and AppDispatch types automatically
-export type RootState  = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
+// Infer types from the store itself — always stays accurate
+export type RootState   = ReturnType<typeof store.getState>
+export type AppDispatch = typeof store.dispatch
 ```
 
 ```ts
-// src/store/hooks.ts — typed wrappers (always use these, not the plain ones)
-import { useDispatch, useSelector } from 'react-redux';
-import type { RootState, AppDispatch } from './index';
+// src/store/hooks.ts — typed wrappers (always use these, not the raw ones)
+import { useDispatch, useSelector } from 'react-redux'
+import type { RootState, AppDispatch } from './index'
 
-export const useAppDispatch = () => useDispatch<AppDispatch>();
+export const useAppDispatch = () => useDispatch<AppDispatch>()
 export const useAppSelector = <T>(selector: (state: RootState) => T): T =>
-  useSelector<RootState, T>(selector);
+  useSelector<RootState, T>(selector)
 ```
 
 ```tsx
 // src/main.tsx — provide the store
-import { Provider } from 'react-redux';
-import { store } from './store';
+import { Provider } from 'react-redux'
+import { store }    from './store'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <Provider store={store}>       {/* ← makes store available everywhere */}
+    <Provider store={store}>
       <BrowserRouter>
-        <ThemeProvider>
-          <App />
-        </ThemeProvider>
+        <App />
       </BrowserRouter>
     </Provider>
-  </StrictMode>,
-);
+  </StrictMode>
+)
 ```
 
 ---
 
-## 11.5 Employees Slice
-
-A **slice** is a collection of Redux logic for one feature: initial state + reducers + actions all in one file.
+## 11.4 Employee Slice
 
 ```ts
 // src/features/employees/employeesSlice.ts
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { employeeService } from '../../services/employeeService';
-import { Employee, Department, CreateEmployeeDto } from '../../types';
-import type { RootState } from '../../store';
+import { createSlice, createAsyncThunk, createSelector } from '@reduxjs/toolkit'
+import type { PayloadAction } from '@reduxjs/toolkit'
+import type { Employee, Department } from '../../types'
+import { employeeService } from '../../services/employeeService'
+import type { RootState } from '../../store'
 
-// ── Async Thunks ──────────────────────────────────────────────────────────────
-// createAsyncThunk generates pending / fulfilled / rejected action types automatically
+// ── Async thunks (handle API calls outside reducers) ──────────────────────────
 
 export const fetchEmployees = createAsyncThunk(
   'employees/fetchAll',
   async (_, { rejectWithValue }) => {
     try {
-      return await employeeService.getAll();
+      return await employeeService.getAll()
     } catch (err) {
-      return rejectWithValue(err instanceof Error ? err.message : 'Fetch failed');
+      return rejectWithValue(err instanceof Error ? err.message : 'Failed to fetch')
     }
   }
-);
+)
 
 export const createEmployee = createAsyncThunk(
   'employees/create',
-  async (dto: CreateEmployeeDto, { rejectWithValue }) => {
+  async (dto: Omit<Employee, 'id'>, { rejectWithValue }) => {
     try {
-      return await employeeService.create(dto);
+      return await employeeService.create(dto)
     } catch (err) {
-      return rejectWithValue(err instanceof Error ? err.message : 'Create failed');
+      return rejectWithValue(err instanceof Error ? err.message : 'Failed to create')
     }
   }
-);
+)
 
 export const deleteEmployee = createAsyncThunk(
   'employees/delete',
   async (id: number, { rejectWithValue }) => {
     try {
-      await employeeService.remove(id);
-      return id;   // return the id so we can remove it from state
+      await employeeService.delete(id)
+      return id   // return id so reducer knows which one to remove
     } catch (err) {
-      return rejectWithValue(err instanceof Error ? err.message : 'Delete failed');
+      return rejectWithValue(err instanceof Error ? err.message : 'Failed to delete')
     }
   }
-);
+)
 
-export const updateEmployee = createAsyncThunk(
-  'employees/update',
-  async ({ id, dto }: { id: number; dto: Partial<CreateEmployeeDto> }, { rejectWithValue }) => {
-    try {
-      return await employeeService.update(id, dto);
-    } catch (err) {
-      return rejectWithValue(err instanceof Error ? err.message : 'Update failed');
-    }
-  }
-);
+// ── Slice ─────────────────────────────────────────────────────────────────────
 
-// ── State Shape ───────────────────────────────────────────────────────────────
 interface EmployeesState {
-  list:        Employee[];
-  loading:     boolean;
-  error:       string | null;
-  filter:      Department;
-  search:      string;
-  showInactive: boolean;
-  selectedId:  number | null;
+  list:        Employee[]
+  loading:     boolean
+  error:       string | null
+  filter:      Department
+  search:      string
+  selectedId:  number | null
 }
 
 const initialState: EmployeesState = {
-  list:         [],
-  loading:      false,
-  error:        null,
-  filter:       'All',
-  search:       '',
-  showInactive: true,
-  selectedId:   null,
-};
+  list:       [],
+  loading:    false,
+  error:      null,
+  filter:     'All',
+  search:     '',
+  selectedId: null,
+}
 
-// ── Slice ─────────────────────────────────────────────────────────────────────
 const employeesSlice = createSlice({
   name: 'employees',
   initialState,
 
-  // Synchronous actions
+  // Synchronous reducers — use Immer, so "mutations" are actually safe
   reducers: {
     setFilter(state, action: PayloadAction<Department>) {
-      state.filter = action.payload;
+      state.filter = action.payload
     },
     setSearch(state, action: PayloadAction<string>) {
-      state.search = action.payload;
-    },
-    setShowInactive(state, action: PayloadAction<boolean>) {
-      state.showInactive = action.payload;
+      state.search = action.payload
     },
     setSelectedId(state, action: PayloadAction<number | null>) {
-      state.selectedId = action.payload;
+      state.selectedId = action.payload
     },
     toggleActive(state, action: PayloadAction<number>) {
-      // RTK uses Immer under the hood — direct mutation IS safe here!
-      const emp = state.list.find(e => e.id === action.payload);
-      if (emp) emp.isActive = !emp.isActive;
+      const emp = state.list.find(e => e.id === action.payload)
+      if (emp) emp.isActive = !emp.isActive   // Immer makes this safe
     },
     clearError(state) {
-      state.error = null;
+      state.error = null
     },
   },
 
-  // Async action handlers
-  extraReducers: (builder) => {
-
+  // Async thunk lifecycle handlers
+  extraReducers: builder => {
     // fetchEmployees
     builder
-      .addCase(fetchEmployees.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+      .addCase(fetchEmployees.pending, state => {
+        state.loading = true
+        state.error   = null
       })
       .addCase(fetchEmployees.fulfilled, (state, action) => {
-        state.loading = false;
-        state.list = action.payload;
+        state.loading = false
+        state.list    = action.payload
       })
       .addCase(fetchEmployees.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      });
+        state.loading = false
+        state.error   = action.payload as string
+      })
 
     // createEmployee
     builder
-      .addCase(createEmployee.pending, (state) => { state.loading = true; })
       .addCase(createEmployee.fulfilled, (state, action) => {
-        state.loading = false;
-        state.list.push(action.payload);  // Immer makes this safe
+        state.list.push(action.payload)
       })
-      .addCase(createEmployee.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      });
 
     // deleteEmployee
     builder
       .addCase(deleteEmployee.fulfilled, (state, action) => {
-        state.list = state.list.filter(e => e.id !== action.payload);
+        state.list = state.list.filter(e => e.id !== action.payload)
       })
-      .addCase(deleteEmployee.rejected, (state, action) => {
-        state.error = action.payload as string;
-      });
-
-    // updateEmployee
-    builder
-      .addCase(updateEmployee.fulfilled, (state, action) => {
-        const idx = state.list.findIndex(e => e.id === action.payload.id);
-        if (idx !== -1) state.list[idx] = action.payload;
-      });
   },
-});
+})
 
-export const {
-  setFilter, setSearch, setShowInactive,
-  setSelectedId, toggleActive, clearError,
-} = employeesSlice.actions;
+export const { setFilter, setSearch, setSelectedId, toggleActive, clearError } =
+  employeesSlice.actions
 
-export default employeesSlice.reducer;
+export default employeesSlice.reducer
 
 // ── Selectors ─────────────────────────────────────────────────────────────────
-// Simple selectors
-export const selectAllEmployees  = (s: RootState) => s.employees.list;
-export const selectLoading       = (s: RootState) => s.employees.loading;
-export const selectError         = (s: RootState) => s.employees.error;
-export const selectFilter        = (s: RootState) => s.employees.filter;
-export const selectSearch        = (s: RootState) => s.employees.search;
-export const selectShowInactive  = (s: RootState) => s.employees.showInactive;
-export const selectSelectedId    = (s: RootState) => s.employees.selectedId;
-```
 
----
+// Basic selectors
+export const selectAllEmployees = (state: RootState) => state.employees.list
+export const selectFilter       = (state: RootState) => state.employees.filter
+export const selectSearch       = (state: RootState) => state.employees.search
+export const selectLoading      = (state: RootState) => state.employees.loading
+export const selectError        = (state: RootState) => state.employees.error
 
-## 11.6 Memoized Selectors with `createSelector`
-
-```ts
-// src/features/employees/employeesSelectors.ts
-import { createSelector } from '@reduxjs/toolkit';
-import {
-  selectAllEmployees, selectFilter,
-  selectSearch, selectShowInactive,
-} from './employeesSlice';
-
-// Filtered + sorted list — only recalculates when inputs change
+// Memoised derived selector — only recalculates when deps change
 export const selectFilteredEmployees = createSelector(
-  [selectAllEmployees, selectFilter, selectSearch, selectShowInactive],
-  (list, filter, search, showInactive) =>
-    list
+  [selectAllEmployees, selectFilter, selectSearch],
+  (employees, filter, search) =>
+    employees
       .filter(e => filter === 'All' || e.department === filter)
-      .filter(e => showInactive || e.isActive)
-      .filter(e =>
-        e.name.toLowerCase().includes(search.toLowerCase()) ||
-        e.email.toLowerCase().includes(search.toLowerCase())
-      )
+      .filter(e => e.name.toLowerCase().includes(search.toLowerCase()))
       .sort((a, b) => a.name.localeCompare(b.name))
-);
+)
 
-// Stats summary
 export const selectStats = createSelector(
   selectAllEmployees,
-  (list) => ({
-    total:       list.length,
-    active:      list.filter(e => e.isActive).length,
-    departments: new Set(list.map(e => e.department)).size,
-    avgSalary:   list.length
-      ? Math.round(list.reduce((s, e) => s + e.salary, 0) / list.length)
-      : 0,
+  employees => ({
+    total:       employees.length,
+    active:      employees.filter(e => e.isActive).length,
+    departments: new Set(employees.map(e => e.department)).size,
+    avgSalary:   Math.round(employees.reduce((s, e) => s + e.salary, 0) / employees.length) || 0,
   })
-);
+)
 
-// Select one employee by id
 export const selectEmployeeById = (id: number) =>
-  createSelector(selectAllEmployees, list => list.find(e => e.id === id));
+  createSelector(selectAllEmployees, list => list.find(e => e.id === id))
 ```
 
 ---
 
-## 11.7 Using Redux in Components
+## 11.5 Using Redux in Components
 
 ```tsx
-// src/pages/EmployeesPage.tsx — refactored to use Redux
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import clsx from 'clsx';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
+// src/pages/EmployeesPage.tsx
+import { useEffect } from 'react'
+import { useAppDispatch, useAppSelector } from '../store/hooks'
 import {
   fetchEmployees,
   deleteEmployee,
   setFilter,
   setSearch,
-  setShowInactive,
-} from '../features/employees/employeesSlice';
-import {
   selectFilteredEmployees,
   selectStats,
-} from '../features/employees/employeesSelectors';
-import {
   selectLoading,
   selectError,
-  selectFilter,
-  selectSearch,
-  selectShowInactive,
-} from '../features/employees/employeesSlice';
-import EmployeeCard from '../components/EmployeeCard';
-import Spinner from '../components/Spinner';
-import ErrorMessage from '../components/ErrorMessage';
-import styles from './EmployeesPage.module.css';
-
-const DEPARTMENTS = ['All', 'Engineering', 'Marketing', 'HR', 'Finance', 'Sales'] as const;
+} from '../features/employees/employeesSlice'
+import type { Department } from '../types'
+import EmployeeCard from '../components/EmployeeCard'
 
 function EmployeesPage() {
-  const dispatch = useAppDispatch();
+  const dispatch  = useAppDispatch()
+  const employees = useAppSelector(selectFilteredEmployees)
+  const stats     = useAppSelector(selectStats)
+  const loading   = useAppSelector(selectLoading)
+  const error     = useAppSelector(selectError)
 
-  // Read from store — no local state for these anymore
-  const employees    = useAppSelector(selectFilteredEmployees);
-  const stats        = useAppSelector(selectStats);
-  const loading      = useAppSelector(selectLoading);
-  const error        = useAppSelector(selectError);
-  const filter       = useAppSelector(selectFilter);
-  const search       = useAppSelector(selectSearch);
-  const showInactive = useAppSelector(selectShowInactive);
-
-  // Fetch on mount
   useEffect(() => {
-    dispatch(fetchEmployees());
-  }, [dispatch]);
+    dispatch(fetchEmployees())
+  }, [dispatch])
 
-  const handleDelete = (id: number) => {
-    dispatch(deleteEmployee(id));
-  };
-
-  if (loading && !stats.total) return <Spinner message="Loading employees…" />;
+  if (loading) return <p>Loading employees…</p>
+  if (error)   return <p>Error: {error}</p>
 
   return (
     <div>
-      {error && (
-        <ErrorMessage
-          message={error}
-          onRetry={() => dispatch(fetchEmployees())}
-        />
-      )}
+      <h1>Employees</h1>
+      <p>{stats.total} total · {stats.active} active · {stats.departments} departments</p>
 
-      {/* Stats */}
-      <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
-        {[
-          { label: 'Total',       value: stats.total },
-          { label: 'Active',      value: stats.active },
-          { label: 'Departments', value: stats.departments },
-          { label: 'Avg Salary',  value: `$${stats.avgSalary.toLocaleString()}` },
-        ].map(s => (
-          <div key={s.label} style={{
-            background: 'white', border: '1px solid var(--border-color)',
-            borderRadius: '8px', padding: '12px 20px', textAlign: 'center',
-          }}>
-            <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-primary)' }}>
-              {s.value}
-            </div>
-            <div style={{ fontSize: '13px', color: 'var(--color-gray-700)' }}>{s.label}</div>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-        <h1>Employees</h1>
-        <Link to="/employees/new" style={{
-          padding: '8px 20px', background: 'var(--color-primary)', color: 'white',
-          borderRadius: '4px', textDecoration: 'none', fontWeight: 600,
-        }}>
-          + Add Employee
-        </Link>
-      </div>
-
-      {/* Search */}
       <input
-        value={search}
+        placeholder="Search employees…"
         onChange={e => dispatch(setSearch(e.target.value))}
-        placeholder="🔍 Search name or email…"
-        style={{
-          width: '100%', padding: '10px 14px', marginBottom: '12px',
-          border: '1.5px solid var(--color-gray-300)', borderRadius: '4px', fontSize: '15px',
-        }}
       />
 
-      {/* Filters */}
-      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
-        {DEPARTMENTS.map(d => (
-          <button
-            key={d}
-            onClick={() => dispatch(setFilter(d as any))}
-            style={{
-              padding: '5px 16px', borderRadius: '20px', fontSize: '13px',
-              border: '1.5px solid var(--color-primary)', cursor: 'pointer',
-              background: filter === d ? 'var(--color-primary)' : 'white',
-              color: filter === d ? 'white' : 'var(--color-primary)',
-            }}
-          >
-            {d}
-          </button>
-        ))}
-        <label style={{ marginLeft: 'auto', display: 'flex', gap: '6px', alignItems: 'center', fontSize: '13px' }}>
-          <input
-            type="checkbox"
-            checked={showInactive}
-            onChange={e => dispatch(setShowInactive(e.target.checked))}
-          />
-          Show inactive
-        </label>
-      </div>
+      {['All', 'Engineering', 'Marketing', 'HR', 'Finance', 'Sales'].map(dept => (
+        <button key={dept} onClick={() => dispatch(setFilter(dept as Department))}>
+          {dept}
+        </button>
+      ))}
 
-      <p style={{ fontSize: '13px', color: 'var(--color-gray-700)', marginBottom: '16px' }}>
-        {employees.length} of {stats.total} employees
-      </p>
-
-      {/* Grid */}
-      {employees.length > 0
-        ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px,1fr))', gap: '16px' }}>
-            {employees.map(emp => (
-              <Link key={emp.id} to={`/employees/${emp.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <EmployeeCard
-                  employee={emp}
-                  onRemove={e => { e.preventDefault(); handleDelete(emp.id); }}
-                />
-              </Link>
-            ))}
-          </div>
-        )
-        : <p style={{ textAlign: 'center', padding: '60px', color: 'var(--color-gray-700)' }}>
-            No employees match your filters.
-          </p>
-      }
+      {employees.map(emp => (
+        <EmployeeCard
+          key={emp.id}
+          employee={emp}
+          onRemove={id => dispatch(deleteEmployee(id))}
+        />
+      ))}
     </div>
-  );
+  )
 }
-export default EmployeesPage;
+
+export default EmployeesPage
 ```
 
 ---
 
-## 11.8 Redux DevTools
+## 11.6 Auth Slice
 
-Install the **Redux DevTools** browser extension:
-- [Chrome](https://chrome.google.com/webstore/detail/redux-devtools/lmhkpmbekcpmknklioeibfkpmmfibljd)
-- [Firefox](https://addons.mozilla.org/en-US/firefox/addon/reduxdevtools/)
+```ts
+// src/features/auth/authSlice.ts
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+import type { PayloadAction } from '@reduxjs/toolkit'
+import { authService } from '../../services/authService'
+import type { AuthUser, LoginCredentials } from '../../services/authService'
+import type { RootState } from '../../store'
 
-Once installed, open DevTools → **Redux** tab:
+export const login = createAsyncThunk(
+  'auth/login',
+  async (credentials: LoginCredentials, { rejectWithValue }) => {
+    try {
+      const user = await authService.login(credentials)
+      authService.saveToken(user.token)
+      return user
+    } catch (err) {
+      return rejectWithValue(err instanceof Error ? err.message : 'Login failed')
+    }
+  }
+)
 
+export const logout = createAsyncThunk('auth/logout', async () => {
+  authService.removeToken()
+  await authService.logout().catch(() => {})
+})
+
+interface AuthState {
+  user:    AuthUser | null
+  loading: boolean
+  error:   string | null
+}
+
+const authSlice = createSlice({
+  name: 'auth',
+  initialState: { user: null, loading: false, error: null } as AuthState,
+  reducers: {
+    clearAuthError(state) { state.error = null },
+  },
+  extraReducers: builder => {
+    builder
+      .addCase(login.pending, state => { state.loading = true; state.error = null })
+      .addCase(login.fulfilled, (state, action: PayloadAction<AuthUser>) => {
+        state.loading = false
+        state.user    = action.payload
+      })
+      .addCase(login.rejected, (state, action) => {
+        state.loading = false
+        state.error   = action.payload as string
+      })
+      .addCase(logout.fulfilled, state => { state.user = null })
+  },
+})
+
+export const { clearAuthError } = authSlice.actions
+export default authSlice.reducer
+
+export const selectCurrentUser = (state: RootState) => state.auth.user
+export const selectIsAdmin     = (state: RootState) => state.auth.user?.role === 'admin'
+export const selectAuthLoading = (state: RootState) => state.auth.loading
+export const selectAuthError   = (state: RootState) => state.auth.error
 ```
-Action Log                  State Inspector
-─────────────────────       ──────────────────────────────
-employees/fetchAll/pending  employees:
-employees/fetchAll/fulfilled  list: [{id:1, name:"Alice"...}]
-employees/setFilter           loading: false
-employees/setSearch           filter: "Engineering"
-                              search: ""
-```
-
-**Time-travel debugging:** Click any past action → state rewinds to that exact point. This is one of Redux's killer features.
 
 ---
 
-## 11.9 Redux vs Context — Summary
+## 11.7 Redux DevTools
 
-| | Context | Redux |
-|-|---------|-------|
-| Setup | Simple | More boilerplate |
-| Performance | Re-renders all consumers on change | Granular with selectors |
-| DevTools | None | Excellent time-travel |
-| Async support | Manual | `createAsyncThunk` |
-| Best for | Theme, Auth, small apps | Large apps, complex data flows |
+Install the Redux DevTools browser extension.
+
+What you get:
+- **State tree** — full store state at any point in time
+- **Action log** — every action dispatched, with its payload
+- **Time-travel** — jump back to any previous state
+- **Diff view** — see exactly what changed after each action
+
+```
+Actions dispatched in order:
+  employees/fetchAll/pending   { }
+  employees/fetchAll/fulfilled { employees: [...10 items] }
+  employees/setFilter          { payload: "Engineering" }
+  employees/setSearch          { payload: "alice" }
+```
+
+---
+
+## 11.8 Redux vs Context — Choose Right
+
+| | Context API | Redux Toolkit |
+|--|------------|---------------|
+| Setup | Zero | Install + configure store |
+| DevTools | No | Yes (time-travel, diff) |
+| Async | Manual (useEffect) | createAsyncThunk |
+| Performance | Rerenders whole subtree | Granular selector subscriptions |
+| Best for | Theme, auth, small shared state | Complex app state, server data |
 
 ---
 
 ## Summary
 
-| Concept | RTK API |
-|---------|---------|
-| Create store | `configureStore({ reducer: { ... } })` |
-| Provide to React | `<Provider store={store}>` |
-| Typed hooks | `useAppDispatch`, `useAppSelector` |
-| Create slice | `createSlice({ name, initialState, reducers })` |
-| Async action | `createAsyncThunk('name', asyncFn)` |
-| Handle async | `builder.addCase(thunk.pending/fulfilled/rejected)` |
-| Memoized selector | `createSelector([inputs], outputFn)` |
+- Redux Toolkit = modern Redux — no boilerplate, Immer built in
+- Slices bundle state + reducers + actions together
+- `createAsyncThunk` handles loading/success/error lifecycle for API calls
+- `createSelector` = memoised selectors that only recalculate when needed
+- Use `useAppDispatch` and `useAppSelector` (typed wrappers) — never the raw versions
 
-**Next → [Module 12: Authentication](./12-authentication.md)**
+**Next → Module 12: Authentication**

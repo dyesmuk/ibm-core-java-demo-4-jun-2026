@@ -1,43 +1,39 @@
 # Module 00 — Getting Started with Angular 21
 
 ## Learning Objectives
-- Understand what Angular is and how it compares to React
-- Install Angular CLI and scaffold the EMS project
-- Understand every generated file and its purpose
-- Trace the complete execution flow from browser to screen
-- Clean boilerplate and print Hello World
+- Understand what Angular is and how it differs from React
+- Scaffold a new Angular 21 project with the CLI
+- Understand every generated file
+- Trace the full bootstrap sequence
+- Run and modify your first Angular app
 
 ---
 
 ## 0.1 What Is Angular?
 
-Angular is a **complete platform** — not just a UI library. Google maintains it and ships everything in one package:
+Angular is a **full-featured, opinionated framework** built and maintained by Google. Unlike React (a UI library), Angular ships with everything you need:
 
-| Need | Angular's built-in solution |
-|------|-----------------------------|
-| UI rendering | Component + Template system |
-| Reactivity | Signals (`signal`, `computed`, `effect`) |
-| HTTP | `HttpClient` |
-| Routing | `RouterModule` |
-| Forms | `ReactiveFormsModule` / `FormsModule` |
-| Dependency Injection | Built-in hierarchical DI container |
-| Build tooling | Angular CLI (esbuild / Webpack) |
-| Testing | TestBed + Jasmine / Jest |
+| Feature | Angular (built-in) | React (you choose) |
+|---------|-------------------|-------------------|
+| Routing | ✅ `@angular/router` | React Router |
+| HTTP | ✅ `HttpClient` | Axios / fetch |
+| Forms | ✅ Reactive + Template-driven | React Hook Form |
+| State | ✅ Signals (Angular 16+) | useState / Redux |
+| DI Container | ✅ Built-in | — |
+| CLI | ✅ `@angular/cli` | Vite |
+| Testing | ✅ Jasmine + Karma / Jest | Vitest |
 
-### Angular vs React — key differences
+### Angular vs React — mental model
 
-| | Angular | React |
-|-|---------|-------|
-| Type | Full platform | UI library |
-| Language | TypeScript only | JS or TS |
-| Reactivity | Signals (built-in) | External (useState, Redux) |
-| Routing | Built-in | External (React Router) |
-| Forms | Built-in (Reactive + Template) | External (RHF, Formik) |
-| DI | Built-in hierarchical | External (Context) |
-| Templates | Separate HTML files | JSX inline |
-| Change detection | Zone.js (default) or Zoneless | Virtual DOM diffing |
-| Learning curve | Steeper initial | Gentler initial |
-| Enterprise use | Very high | Very high |
+| | React | Angular |
+|--|-------|---------|
+| Type | Library | Framework |
+| Language | JSX (JS/TS) | TypeScript only |
+| Templates | JSX inside `.tsx` | Separate `.html` files |
+| Data binding | One-way by default | Two-way with `[(ngModel)]` |
+| State (modern) | `useState`, Signals (React 19) | Signals (Angular 16+) |
+| Change detection | Virtual DOM diffing | Zone.js → now Signals |
+| Learning curve | Moderate | Steeper (but more structured) |
 
 ---
 
@@ -47,220 +43,185 @@ Angular is a **complete platform** — not just a UI library. Google maintains i
 |------|---------|-------|
 | Node.js | 20 LTS+ | `node -v` |
 | npm | 10+ | `npm -v` |
-| Angular CLI | 21+ | `ng version` |
+| Angular CLI | 21 | `ng version` |
+
+Install or update the Angular CLI globally:
 
 ```bash
-npm install -g @angular/cli@latest
-ng version
+npm install -g @angular/cli@21
+ng version   # should show Angular CLI: 21.x
 ```
 
-### Recommended VS Code Extensions
-
-1. **Angular Language Service** — IntelliSense inside HTML templates
-2. **Angular Snippets** — `a-component` → full scaffold
-3. **ESLint** — code quality
-4. **Prettier** — auto-format on save
-5. **Angular DevTools** — Chrome extension (inspect component tree, signals)
+### VS Code Extensions
+- **Angular Language Service** — autocomplete in templates, go-to-definition
+- **Angular Snippets** — type `a-component` → full skeleton
+- **ESLint** — code quality
+- **Prettier** — formatting
+- **Material Icon Theme** — Angular folder structure is easier to navigate
 
 ---
 
-## 0.3 Create the EMS Project
+## 0.3 Creating the Project
 
 ```bash
-ng new ibm-ems-app \
-  --standalone \
-  --routing \
-  --style=scss \
-  --skip-tests=false
+ng new ibm-ems-angular --routing --style=css --standalone
+cd ibm-ems-angular
+ng serve
 ```
 
-| Flag | What it does |
-|------|-------------|
-| `--standalone` | Use standalone components (no NgModule — Angular 21 default) |
-| `--routing` | Generate `app.routes.ts` and `RouterOutlet` |
-| `--style=scss` | Use SCSS (supports nesting and variables) |
-| `--skip-tests=false` | Generate `.spec.ts` test files |
+**Flag meanings:**
 
-```bash
-cd ibm-ems-app
-ng serve --open   # opens http://localhost:4200 automatically
-```
+| Flag | Effect |
+|------|--------|
+| `--routing` | Generates `app.routes.ts` for routing |
+| `--style=css` | Use plain CSS (no SCSS/LESS) |
+| `--standalone` | Use standalone components (modern Angular, no NgModules needed) |
+
+Open **http://localhost:4200** — you see the Angular welcome page.
 
 ---
 
-## 0.4 Project Structure — Every File Explained
+## 0.4 Project File Anatomy
 
 ```
-ibm-ems-app/
+ibm-ems-angular/
 │
 ├── src/
 │   ├── app/
-│   │   ├── app.component.ts        ← Root component class
-│   │   ├── app.component.html      ← Root component template
-│   │   ├── app.component.scss      ← Root component styles
-│   │   ├── app.component.spec.ts   ← Root component test
-│   │   ├── app.config.ts           ← Application-level providers (replaces AppModule)
-│   │   └── app.routes.ts           ← Route definitions
+│   │   ├── app.component.ts        ← Root component (class + template + styles)
+│   │   ├── app.component.html      ← Root template
+│   │   ├── app.component.css       ← Root styles (scoped)
+│   │   ├── app.component.spec.ts   ← Root component tests
+│   │   └── app.routes.ts           ← Route configuration
 │   │
-│   ├── assets/                     ← Static files (images, fonts, icons)
-│   ├── index.html                  ← The single HTML page (SPA shell)
-│   ├── main.ts                     ← Entry point — calls bootstrapApplication()
-│   └── styles.scss                 ← Global SCSS
+│   ├── assets/                     ← Static files (images, fonts)
+│   ├── index.html                  ← The one HTML file
+│   ├── main.ts                     ← Entry point — bootstraps Angular
+│   └── styles.css                  ← Global stylesheet
 │
-├── angular.json                    ← CLI workspace config (build, serve, test settings)
+├── angular.json                    ← CLI workspace configuration
 ├── package.json
-├── tsconfig.json                   ← TypeScript root config
-├── tsconfig.app.json               ← TS config for app source
-└── tsconfig.spec.json              ← TS config for test files
+└── tsconfig.json
 ```
 
-### `src/index.html`
+### Key files explained
+
+#### `src/index.html`
 
 ```html
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>IbmEmsApp</title>
-  <base href="/">          ← CRITICAL for router — sets URL base
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IbmEmsAngular</title>
+  <base href="/">           <!-- Angular Router needs this -->
 </head>
 <body>
-  <app-root></app-root>    ← Angular mounts your app here
+  <app-root></app-root>     <!-- Angular mounts the app here -->
 </body>
 </html>
 ```
 
-### `src/main.ts`
+`<app-root>` is the custom HTML element defined by the root `AppComponent`. Angular replaces it with the rendered template.
+
+#### `src/main.ts`
 
 ```ts
-import { bootstrapApplication } from '@angular/platform-browser';
-import { appConfig } from './app/app.config';
-import { AppComponent } from './app/app.component';
+import { bootstrapApplication } from '@angular/platform-browser'
+import { appConfig }            from './app/app.config'
+import { AppComponent }         from './app/app.component'
 
 bootstrapApplication(AppComponent, appConfig)
-  .catch(err => console.error(err));
+  .catch(err => console.error(err))
 ```
 
-This is the **entry point**. It tells Angular:  
-- Which component is the root (`AppComponent`)  
-- What global providers/config to use (`appConfig`)
+`bootstrapApplication` is the modern standalone API — no `NgModule` needed.
 
-### `src/app/app.config.ts`
+#### `src/app/app.config.ts` (generated with `--standalone`)
 
 ```ts
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
-import { provideRouter } from '@angular/router';
-import { routes } from './app.routes';
+import { ApplicationConfig } from '@angular/core'
+import { provideRouter }     from '@angular/router'
+import { routes }            from './app.routes'
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-  ],
-};
+  ]
+}
 ```
 
-This replaces the old `AppModule`. All application-level providers go here (router, HttpClient, NgRx store, etc.).
+This is where you register global providers — router, HTTP client, etc.
 
-### `src/app/app.component.ts`
+#### `src/app/app.component.ts`
 
 ```ts
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component } from '@angular/core'
+import { RouterOutlet } from '@angular/router'
 
 @Component({
-  selector: 'app-root',        // matches <app-root> in index.html
-  standalone: true,            // no NgModule required
-  imports: [RouterOutlet],     // declare what this component needs
+  selector:    'app-root',          // the custom HTML tag
+  standalone:  true,
+  imports:     [RouterOutlet],      // what this component uses
   templateUrl: './app.component.html',
-  styleUrl: './app.component.scss',
+  styleUrl:    './app.component.css',
 })
 export class AppComponent {
-  title = 'ibm-ems-app';
+  title = 'ibm-ems-angular'
 }
 ```
 
 ---
 
-## 0.5 Full Execution Flow
+## 0.5 Full Bootstrap Sequence
 
 ```
-① Browser loads http://localhost:4200
-        │
-        ▼
-② Angular CLI dev server responds with index.html
-        │
-        ▼
-③ Browser finds <app-root></app-root> (empty)
-   Browser downloads <script> bundles injected by CLI
-        │
-        ▼
-④ main.ts executes:
+① Browser requests http://localhost:4200
+        ↓
+② Angular dev server sends index.html
+        ↓
+③ Browser finds <app-root> (unknown element — Angular will fill it)
+   and the <script> tags injected by the CLI
+        ↓
+④ main.ts runs:
    bootstrapApplication(AppComponent, appConfig)
-        │
-        ▼
-⑤ Angular creates the root Injector
-   Registers all providers from appConfig:
-   — ZoneChangeDetection
-   — Router (with routes)
-        │
-        ▼
-⑥ Angular instantiates AppComponent
-   — runs constructor (injects dependencies)
-   — processes @Component metadata
-        │
-        ▼
-⑦ Angular compiles the template:
-   — evaluates binding expressions
-   — creates child components
-   — applies directives and pipes
-        │
-        ▼
-⑧ Change detection runs:
-   — walks the component tree
-   — patches DOM where values changed
-        │
-        ▼
-⑨ Browser paints — user sees the UI
-        │
-        ▼
-⑩ Router reads the current URL
-   Renders the matched route component
+        ↓
+⑤ Angular reads @Component({ selector: 'app-root', ... })
+   Finds <app-root> in the DOM
+        ↓
+⑥ Angular compiles AppComponent's template
+   Renders it into <app-root>
+        ↓
+⑦ Router reads the URL → matches a route → renders that component
    inside <router-outlet>
+        ↓
+⑧ Browser paints → user sees the UI
 ```
 
 ---
 
-## 0.6 Angular CLI Commands
+## 0.6 Angular CLI Commands Reference
 
 ```bash
-# Serve with hot reload
+# Start dev server (with hot reload)
 ng serve
-ng serve --port 4300 --open
 
-# Generate components, services, etc.
-ng generate component components/employee-card --standalone
-ng g c components/employee-card --standalone     # shorthand
+# Generate components, services, pipes, etc.
+ng generate component employees/employee-card
+ng generate service   employees/employee
+ng generate pipe      shared/salary-format
+ng generate guard     auth/auth
 
-ng generate service services/employee
-ng g s services/employee
+# Shorthand
+ng g c employees/employee-card
+ng g s employees/employee
 
-ng generate interface models/employee
-ng g interface models/employee
+# Build for production
+ng build --configuration=production
 
-ng generate pipe pipes/salary-format
-ng generate directive directives/highlight
-ng generate guard guards/auth --implements CanActivate
-ng generate interceptor interceptors/auth-token
-
-# Build
-ng build                              # dev build
-ng build --configuration=production   # prod build → dist/
-
-# Tests
-ng test                               # Karma + Jasmine (default)
-ng test --no-watch --code-coverage    # single run with coverage
+# Run tests
+ng test       # Jasmine + Karma (or Jest if configured)
+ng e2e        # End-to-end (Cypress / Playwright)
 
 # Lint
 ng lint
@@ -268,142 +229,118 @@ ng lint
 
 ---
 
-## 0.7 Clean Boilerplate — Hello World
+## 0.7 Cleaning the Boilerplate
 
-### `src/app/app.component.ts`
+### `src/app/app.component.html` — replace entirely
+
+```html
+<h1>IBM Employee Management System</h1>
+<router-outlet />
+```
+
+### `src/app/app.component.ts` — update title
 
 ```ts
-import { Component } from '@angular/core';
+import { Component } from '@angular/core'
+import { RouterOutlet } from '@angular/router'
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  template: `
-    <div class="app">
-      <h1>Hello World</h1>
-      <p>IBM Employee Management System</p>
-    </div>
-  `,
-  styles: [`
-    .app { padding: 24px; font-family: sans-serif; }
-  `]
+  imports: [RouterOutlet],
+  templateUrl: './app.component.html',
+  styleUrl: './app.component.css',
 })
-export class AppComponent {}
+export class AppComponent {
+  title = 'IBM EMS'
+}
 ```
 
-### `src/styles.scss`
+### `src/styles.css` — global reset
 
-```scss
-/* ── Reset ── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-/* ── Design Tokens ── */
-:root {
-  --color-primary:       #0062ff;
-  --color-primary-dark:  #0043ce;
-  --color-primary-light: #d0e2ff;
-  --color-gray-900:      #161616;
-  --color-gray-700:      #525252;
-  --color-gray-300:      #c6c6c6;
-  --color-gray-100:      #f4f4f4;
-  --color-white:         #ffffff;
-  --color-success:       #24a148;
-  --color-success-bg:    #defbe6;
-  --color-danger:        #da1e28;
-  --color-danger-bg:     #fff1f1;
-  --color-warning:       #f1c21b;
-  --color-border:        #e0e0e0;
-
-  --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont,
-               'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
-
-  --radius-sm:   4px;
-  --radius-md:   8px;
-  --radius-full: 9999px;
-  --shadow-sm:   0 1px 3px rgba(0,0,0,0.08);
-  --shadow-md:   0 4px 12px rgba(0,0,0,0.12);
-  --shadow-lg:   0 8px 24px rgba(0,0,0,0.16);
+```css
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  font-family: var(--font-sans);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   font-size: 16px;
   line-height: 1.6;
-  color: var(--color-gray-900);
-  background: var(--color-gray-100);
+  color: #161616;
+  background: #f4f4f4;
 }
 
-a { color: var(--color-primary); text-decoration: none; }
-a:hover { text-decoration: underline; }
-button { font-family: var(--font-sans); cursor: pointer; }
-
-/* ── Utility classes ── */
-.btn {
-  display: inline-flex; align-items: center;
-  padding: 10px 20px; border: none;
-  border-radius: var(--radius-sm);
-  font-size: 14px; font-weight: 600;
-  transition: background 0.15s, opacity 0.15s;
-  cursor: pointer;
-
-  &--primary   { background: var(--color-primary);   color: white; }
-  &--secondary { background: white; color: var(--color-primary); border: 1.5px solid var(--color-primary); }
-  &--danger    { background: var(--color-danger);     color: white; }
-  &--sm        { padding: 6px 14px; font-size: 13px; }
-
-  &:hover:not(:disabled) { opacity: 0.9; }
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
+:root {
+  --color-primary: #0062ff;
+  --color-danger:  #da1e28;
+  --color-success: #24a148;
+  --color-border:  #e0e0e0;
+  --color-surface: #ffffff;
 }
 ```
 
-Save — browser shows **Hello World**.
+Save — the browser hot-reloads and shows "IBM Employee Management System".
 
 ---
 
-## 0.8 Angular 21 — What Changed From Earlier Versions
+## 0.8 Standalone vs NgModule — Understanding the Shift
 
-| Before Angular 15-16 | Angular 21 |
-|----------------------|------------|
-| NgModules required | **Standalone components** — no NgModule needed |
-| `*ngIf`, `*ngFor` | `@if`, `@for`, `@switch`, `@defer` |
-| `@Input()` decorator | `input()` signal function |
-| `@Output()` decorator | `output()` signal function |
-| `@ViewChild()` decorator | `viewChild()` signal query |
-| `new EventEmitter()` | `output<T>()` |
-| Zone.js always | **Zoneless** option with signals |
-| `ngOnDestroy` for cleanup | `DestroyRef`, `takeUntilDestroyed()` |
-| Class-based guards | **Functional guards** |
-| `resolve` with classes | `ResolveFn` functional resolvers |
+Angular originally required every component to be declared in an `NgModule`. Angular 14+ introduced **standalone components** as an opt-in, and Angular 17+ made them the default.
+
+```ts
+// OLD approach (NgModule) — you will see this in legacy code
+@NgModule({
+  declarations: [AppComponent, EmployeeCardComponent],
+  imports: [BrowserModule, HttpClientModule],
+  bootstrap: [AppComponent],
+})
+export class AppModule {}
+
+// MODERN approach (Standalone) — what we use
+// No NgModule needed — components declare their own dependencies
+@Component({
+  standalone: true,
+  imports: [CommonModule, RouterLink],   // direct imports
+  // ...
+})
+export class EmployeeCardComponent {}
+```
+
+> Throughout this course we use **standalone components exclusively**. When you encounter legacy NgModule-based code in the wild, the concepts are the same — the wiring is just different.
 
 ---
 
 ## 0.9 EMS Project Plan
 
 | Module | Feature added to EMS |
-|--------|---------------------|
-| 02 | `EmployeeCardComponent` with signal inputs |
-| 03 | Employee list with `@for`, `@if`, pipes |
-| 04 | `EmployeeService` with DI |
-| 05 | Pages + routing: Home, List, Detail |
-| 06 | Real API calls with `HttpClient` |
-| 07 | Signal-based state management |
-| 08 | RxJS for search debouncing |
-| 09 | Create/Edit employee form |
-| 10 | Custom `SalaryPipe`, `HighlightDirective` |
-| 11 | NgRx global store |
-| 12 | Login, JWT, route guards |
-| 14 | Tests for all layers |
-| 15 | Docker + production deployment |
+|--------|----------------------|
+| 02 | `EmployeeCardComponent` with data binding |
+| 03 | Input/Output, component interaction |
+| 04 | Debugging tools |
+| 05 | `*ngIf`, `*ngFor`, custom directives |
+| 06 | Services + Dependency Injection |
+| 07 | Routing — list, detail, 404 pages |
+| 08 | RxJS Observables |
+| 09 | Reactive Forms — create/edit employee |
+| 10 | Pipes — salary format, date, search filter |
+| 11 | HttpClient — real API calls |
+| 12 | Authentication + Route Guards |
+| 13 | Dynamic components, lazy loading |
+| 14 | Angular Modules, optimising build |
+| 15 | Deploy to production |
+| 16 | Unit testing |
 
 ---
 
 ## Summary
 
-- Angular is a **full platform** — routing, HTTP, forms, DI all built-in
-- Angular 21 uses **standalone components** — no NgModules
-- `main.ts` → `bootstrapApplication(AppComponent, appConfig)` is the entry point
-- `app.config.ts` is where global providers are registered
-- The CLI generates all boilerplate with `ng generate`
+- Angular is a complete framework — routing, HTTP, forms, DI all built in
+- Angular 21 uses standalone components by default — no NgModule needed
+- `bootstrapApplication()` replaces the old `NgModule`-based bootstrap
+- Signals are the modern way to handle reactive state (covered from Module 02)
+- `ng generate` creates files correctly wired — use it for everything
 
-**Next → [Module 01: TypeScript for Angular](./01-typescript-for-angular.md)**
+**Next → Module 01: TypeScript & Angular Fundamentals**

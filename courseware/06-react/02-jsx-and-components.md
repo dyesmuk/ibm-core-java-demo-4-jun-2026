@@ -1,27 +1,27 @@
 # Module 02 — JSX and Components
 
 ## Learning Objectives
-- Understand what JSX really is (and what it compiles to)
-- Know all the JSX rules
+- Understand what JSX compiles to
+- Know every JSX rule cold
 - Write function components
-- Compose components together
-- Apply to EMS: create the first `EmployeeCard` component
+- Compose components into a UI tree
+- EMS: create the first `EmployeeCard` component
 
 ---
 
 ## 2.1 What Is JSX?
 
-JSX looks like HTML inside JavaScript, but it is **not HTML**. It is a syntax extension that Vite/TypeScript compiles into regular JavaScript function calls.
+JSX looks like HTML inside JavaScript. It is **not** HTML — it's a syntax extension that gets compiled into regular JavaScript function calls.
 
 ```tsx
-// What you write (JSX)
-const element = <h1 className="title">Hello World</h1>;
+// What you write
+const element = <h1 className="title">Hello World</h1>
 
-// What it compiles to (JS)
-const element = React.createElement('h1', { className: 'title' }, 'Hello World');
+// What it compiles to
+const element = React.createElement('h1', { className: 'title' }, 'Hello World')
 ```
 
-That `React.createElement` call returns a plain JavaScript object (the "virtual DOM node"):
+That `React.createElement` call returns a plain JavaScript object — a "virtual DOM node":
 
 ```js
 {
@@ -32,25 +32,21 @@ That `React.createElement` call returns a plain JavaScript object (the "virtual 
 }
 ```
 
-React uses these objects to build the Virtual DOM tree, then figures out what real DOM changes to make.
-
-> You never call `React.createElement` yourself — you write JSX and the compiler does it.
+React builds a tree of these objects (the Virtual DOM), then figures out what real DOM changes to make. You never call `React.createElement` yourself — the compiler handles it.
 
 ---
 
-## 2.2 JSX Rules
+## 2.2 JSX Rules — All of Them
 
-These are the rules you **must** follow or you'll get compiler errors.
-
-### Rule 1 — Return a single root element
+### Rule 1 — Single root element
 
 ```tsx
-// ❌ Error — two root elements
+// ❌ Two sibling roots — compiler error
 function Bad() {
   return (
     <h1>Title</h1>
     <p>Body</p>
-  );
+  )
 }
 
 // ✅ Wrap in a div
@@ -60,38 +56,28 @@ function Good() {
       <h1>Title</h1>
       <p>Body</p>
     </div>
-  );
+  )
 }
 
-// ✅ Or use a Fragment (no extra DOM node)
+// ✅ Fragment — no extra DOM node (preferred when div adds no meaning)
 function Good() {
   return (
     <>
       <h1>Title</h1>
       <p>Body</p>
     </>
-  );
-}
-
-// ✅ Or use explicit <Fragment> (when you need a key prop)
-import { Fragment } from 'react';
-function Good() {
-  return (
-    <Fragment>
-      <h1>Title</h1>
-    </Fragment>
-  );
+  )
 }
 ```
 
-### Rule 2 — All tags must be closed
+### Rule 2 — Every tag must be closed
 
 ```tsx
-// ❌ Error — img, input, br not closed
+// ❌
 <img src="photo.jpg">
 <input type="text">
 
-// ✅ Self-close them
+// ✅
 <img src="photo.jpg" />
 <input type="text" />
 <br />
@@ -100,49 +86,45 @@ function Good() {
 ### Rule 3 — `class` → `className`, `for` → `htmlFor`
 
 ```tsx
-// ❌ 'class' is a reserved JS keyword
+// ❌ Reserved JS keywords
 <div class="container">
-
-// ✅ use className
-<div className="container">
-
-// ❌ 'for' is reserved too
 <label for="name">
 
-// ✅ use htmlFor
+// ✅
+<div className="container">
 <label htmlFor="name">
 ```
 
-### Rule 4 — camelCase for all HTML attributes
+### Rule 4 — camelCase attributes
 
 ```tsx
-// ❌ Wrong (HTML style)
-<div onclick="fn()" tabindex="0" data-value="x">
+// ❌
+<div onclick="fn()" tabindex="0">
 
-// ✅ Correct (JSX style)
-<div onClick={fn} tabIndex={0} data-value="x">
-//                             ↑ data-* and aria-* stay hyphenated
+// ✅
+<div onClick={fn} tabIndex={0}>
+// Exception: data-* and aria-* attributes stay hyphenated
+<div data-testid="card" aria-label="Employee card">
 ```
 
 ### Rule 5 — JavaScript expressions go inside `{}`
 
 ```tsx
-const name = 'Alice';
-const isAdmin = true;
+const name = 'Alice'
+const isAdmin = true
 
-// ✅ Variables, expressions, function calls all work inside {}
 <p>{name}</p>
 <p>{2 + 2}</p>
 <p>{name.toUpperCase()}</p>
 <p>{isAdmin ? 'Admin' : 'User'}</p>
-<img src={employee.avatarUrl} />
+<img src={employee.avatarUrl} alt={employee.name} />
 ```
 
-### Rule 6 — `{}` expects an expression, not a statement
+### Rule 6 — `{}` takes expressions, not statements
 
 ```tsx
-// ❌ if statement is not an expression
-<p>{if (x > 0) { ... }}</p>
+// ❌ if is a statement
+<p>{if (x > 0) { 'positive' }}</p>
 
 // ✅ ternary is an expression
 <p>{x > 0 ? 'positive' : 'zero'}</p>
@@ -151,13 +133,13 @@ const isAdmin = true;
 <p>{isAdmin && <span>Admin</span>}</p>
 ```
 
-### Full comparison — HTML vs JSX
+### HTML vs JSX cheat sheet
 
 | HTML | JSX |
 |------|-----|
 | `class="..."` | `className="..."` |
 | `for="..."` | `htmlFor="..."` |
-| `onclick="..."` | `onClick={fn}` |
+| `onclick="fn()"` | `onClick={fn}` |
 | `tabindex="0"` | `tabIndex={0}` |
 | `style="color:red"` | `style={{ color: 'red' }}` |
 | `<img>` | `<img />` |
@@ -165,62 +147,58 @@ const isAdmin = true;
 
 ---
 
-## 2.3 Expressions vs Statements in JSX
+## 2.3 Expressions vs Statements
 
-| Expression (✅ allowed in {}) | Statement (❌ not allowed in {}) |
-|-------------------------------|----------------------------------|
+| Expressions ✅ (allowed in {}) | Statements ❌ (not allowed) |
+|-------------------------------|----------------------------|
 | `name` | `let name = 'Alice'` |
-| `2 + 2` | `if (x > 0) { }` |
+| `2 + 2` | `if (x) { }` |
 | `arr.map(...)` | `for (let i ...)` |
 | `condition ? A : B` | `switch (...)` |
-| `condition && <El />` | function declarations |
-| function calls | `return ...` |
+| `condition && <El />` | `return ...` |
+| Function calls | Function declarations |
 
 ---
 
 ## 2.4 Function Components
 
 A React component is a **function** that:
-1. Starts with an **uppercase letter**
-2. Returns **JSX** (or `null`)
+1. Starts with an **uppercase letter** (mandatory)
+2. Returns **JSX** or `null`
 
 ```tsx
-// Minimal component
+// Minimal
 function Greeting() {
-  return <h1>Hello, World!</h1>;
+  return <h1>Hello, World!</h1>
 }
 
-// Arrow function component (equally valid)
-const Greeting = () => <h1>Hello, World!</h1>;
+// Arrow function — equally valid
+const Greeting = () => <h1>Hello, World!</h1>
 
-// With multi-line JSX — wrap in parentheses
+// Multi-line JSX — wrap in parentheses
 const Greeting = () => (
   <div>
     <h1>Hello, World!</h1>
     <p>Welcome to EMS</p>
   </div>
-);
+)
 ```
 
 ### Why uppercase?
 
 ```tsx
-// Lowercase → React treats it as an HTML element
-<div />     // → creates a <div> DOM node
-<greeting /> // → tries to create a <greeting> DOM node (unknown element)
-
-// Uppercase → React treats it as a component function call
-<Greeting /> // → calls Greeting() and uses the return value
+<div />       // lowercase → React creates a real HTML element
+<Greeting />  // uppercase → React calls the Greeting() function
 ```
+
+React uses the capitalisation to distinguish HTML elements from component functions. Lowercase = DOM node; uppercase = your code.
 
 ### Returning null
 
-A component can return `null` to render nothing:
-
 ```tsx
-function DebugBanner() {
-  if (!import.meta.env.DEV) return null; // shows nothing in production
-  return <div className="debug-banner">Development Mode</div>;
+function DevBanner() {
+  if (!import.meta.env.DEV) return null   // nothing in production
+  return <div>⚠️ Development Mode</div>
 }
 ```
 
@@ -228,156 +206,160 @@ function DebugBanner() {
 
 ## 2.5 Composing Components
 
-Components are meant to be composed — you build complex UIs by nesting simple components.
+Complex UIs are built by nesting simple components. This is the core mental model of React.
 
 ```
 App
 └── Layout
     ├── Header
-    │   ├── Logo
     │   └── NavBar
-    ├── Main
-    │   ├── PageTitle
-    │   └── EmployeeGrid
-    │       ├── EmployeeCard
-    │       ├── EmployeeCard
-    │       └── EmployeeCard
-    └── Footer
+    └── Main
+        └── EmployeeGrid
+            ├── EmployeeCard
+            ├── EmployeeCard
+            └── EmployeeCard
 ```
 
 ```tsx
-// Each of these is a separate file/function
-function Logo() { return <span className="logo">🏢 IBM EMS</span>; }
-
-function NavBar() { return <nav>...</nav>; }
+function NavBar() {
+  return <nav>IBM EMS</nav>
+}
 
 function Header() {
   return (
     <header>
-      <Logo />
       <NavBar />
     </header>
-  );
+  )
 }
 
 function App() {
   return (
     <div>
       <Header />
-      <main>...</main>
+      <main>Content here</main>
     </div>
-  );
+  )
 }
 ```
 
 ---
 
-## 2.6 EMS Project — First Component
-
-Let's create our first real component.
-
-### File: `src/components/EmployeeCard.tsx`
-
-Create the folder `src/components/` first.
-
-```tsx
-// src/components/EmployeeCard.tsx
-
-function EmployeeCard() {
-  return (
-    <div style={{
-      border: '1px solid #e0e0e0',
-      borderRadius: '8px',
-      padding: '20px',
-      margin: '10px',
-      background: 'white',
-      maxWidth: '300px',
-    }}>
-      <h3 style={{ margin: '0 0 8px', color: '#161616' }}>Alice Johnson</h3>
-      <p style={{ margin: '4px 0', color: '#525252', fontSize: '14px' }}>
-        Department: Engineering
-      </p>
-      <p style={{ margin: '4px 0', color: '#525252', fontSize: '14px' }}>
-        Email: alice@ibm.com
-      </p>
-      <p style={{ margin: '8px 0 0', fontWeight: '600', color: '#0062ff' }}>
-        $95,000
-      </p>
-    </div>
-  );
-}
-
-export default EmployeeCard;
-```
-
-### Update `src/App.tsx` to use it
-
-```tsx
-// src/App.tsx
-import EmployeeCard from './components/EmployeeCard';
-
-function App() {
-  return (
-    <div style={{ padding: '24px' }}>
-      <h1>IBM Employee Management System</h1>
-      <p style={{ color: '#525252', marginBottom: '24px' }}>
-        Manage your organization's workforce
-      </p>
-      <EmployeeCard />
-    </div>
-  );
-}
-
-export default App;
-```
-
-You should see a white card with Alice's details on a grey background.
-
----
-
-## 2.7 Folder and File Conventions
+## 2.6 File and Folder Conventions
 
 ```
 src/
-├── components/          # Reusable, shared components
+├── components/          ← Reusable, shared UI components
 │   └── EmployeeCard.tsx
-├── pages/               # Page-level components (used by router)
+├── pages/               ← Page-level components (used by the router)
 │   └── EmployeesPage.tsx
-├── hooks/               # Custom hooks
+├── hooks/               ← Custom hooks
 │   └── useEmployees.ts
-├── services/            # API calls
+├── services/            ← API calls
 │   └── employeeService.ts
-├── types/               # Shared TypeScript types
+├── types/               ← Shared TypeScript interfaces
 │   └── index.ts
-├── utils/               # Pure utility functions
-│   └── formatters.ts
+├── data/                ← Seed/mock data
+│   └── employees.ts
 ├── App.tsx
 ├── main.tsx
 └── index.css
 ```
 
-**One component per file. File name matches component name.**
+**One component per file. File name = component name.**
+
+---
+
+## 2.7 EMS Project — First Component
+
+### `src/types/index.ts` — define the shape once
+
+```ts
+export interface Employee {
+  id: number
+  name: string
+  email: string
+  department: string
+  salary: number
+  isActive: boolean
+  joinDate: string
+}
+
+export type Department = 'Engineering' | 'Marketing' | 'HR' | 'Finance' | 'Sales' | 'All'
+```
+
+### `src/components/EmployeeCard.tsx`
+
+```tsx
+import type { Employee } from '../types'
+
+interface EmployeeCardProps {
+  employee: Employee
+}
+
+function EmployeeCard({ employee }: EmployeeCardProps) {
+  return (
+    <div>
+      <h3>{employee.name}</h3>
+      <p>{employee.department}</p>
+      <p>{employee.email}</p>
+      <p>${employee.salary.toLocaleString()} / yr</p>
+      <span>{employee.isActive ? 'Active' : 'Inactive'}</span>
+    </div>
+  )
+}
+
+export default EmployeeCard
+```
+
+### `src/App.tsx`
+
+```tsx
+import EmployeeCard from './components/EmployeeCard'
+import type { Employee } from './types'
+
+const sampleEmployee: Employee = {
+  id: 1,
+  name: 'Alice Johnson',
+  email: 'alice@ibm.com',
+  department: 'Engineering',
+  salary: 95000,
+  isActive: true,
+  joinDate: '2021-03-15',
+}
+
+function App() {
+  return (
+    <div>
+      <h1>IBM Employee Management System</h1>
+      <EmployeeCard employee={sampleEmployee} />
+    </div>
+  )
+}
+
+export default App
+```
 
 ---
 
 ## 2.8 Export Patterns
 
 ```tsx
-// Named export — component AND types together
-export interface Employee { id: number; name: string; }
-export function EmployeeCard() { return <div />; }
+// Named export
+export function EmployeeCard() { return <div /> }
+export type { Employee }
 
-// Default export — one per file, the main thing
-function EmployeeCard() { return <div />; }
-export default EmployeeCard;
+// Default export
+function EmployeeCard() { return <div /> }
+export default EmployeeCard
 
-// Folder barrel — re-export everything from one place
+// Barrel — re-export from index.ts in a folder
 // src/components/index.ts
-export { default as EmployeeCard } from './EmployeeCard';
-export { default as EmployeeList } from './EmployeeList';
+export { default as EmployeeCard } from './EmployeeCard'
+export { default as EmployeeList } from './EmployeeList'
 
-// Import from barrel
-import { EmployeeCard, EmployeeList } from './components';
+// Usage
+import { EmployeeCard, EmployeeList } from './components'
 ```
 
 ---
@@ -388,11 +370,11 @@ import { EmployeeCard, EmployeeList } from './components';
 function App() {
   return (
     <div>
-      {/* This is a JSX comment — it does not appear in the output */}
+      {/* This is how you comment in JSX */}
       <h1>IBM EMS</h1>
-      {/* TODO: Add employee count */}
+      {/* TODO: Add employee count badge */}
     </div>
-  );
+  )
 }
 ```
 
@@ -400,10 +382,10 @@ function App() {
 
 ## Summary
 
-- JSX compiles to `React.createElement()` calls
-- Every JSX element must be closed, one root, `className` not `class`
-- Components are functions that start with uppercase and return JSX
+- JSX compiles to `React.createElement()` — it's JavaScript, not HTML
+- Every tag must close, one root element, `className` not `class`
+- Uppercase = component function call; lowercase = HTML element
 - Compose big UIs from small, single-purpose components
-- We created our first `EmployeeCard` component
+- One component per file, types in `src/types/index.ts`
 
-**Next → [Module 03: Props, State, and Events](./03-props-state-events.md)**
+**Next → Module 03: Props, State, and Events**
