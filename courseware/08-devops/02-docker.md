@@ -1,660 +1,687 @@
-# 02 — Docker
-> **DevOps Hands-On Series** | Module 2 of 6 | Node.js Express project
+# Module 02 — Docker
+
+## Learning Objectives
+- Understand what Docker is and the problem it solves
+- Use core Docker CLI commands confidently
+- Run containers with various options
+- Build custom Docker images
+- Use Docker Compose for multi-container apps
+- Understand Docker networking and storage
+- Push/pull images from a registry
+- EMS: containerise the Node.js API and run it anywhere
 
 ---
 
-## The Problem Docker Solves
+## 2.1 Introduction — Why Docker?
 
-"It works on my machine."
-
-Docker kills that sentence. It packages your app, its runtime, and all its dependencies into a single portable **image** that runs identically everywhere — your laptop, the CI server, a cloud VM, a Kubernetes cluster.
-
-Git solves the "which version of code?" problem. Docker solves the "which version of everything else?" problem:
-
-| Git solves | Docker solves |
-|---|---|
-| Which version of the code? | Which version of Node, OS, libraries? |
-| Code shared via GitHub | App + runtime shared via Docker Hub |
-| `git clone` → you have the source | `docker pull` → you have the running environment |
-| `.gitignore` excludes `node_modules` | Docker image *includes* everything to run |
-
-The complete delivery pipeline you're building:
+### The "Works on My Machine" Problem
 
 ```
-git push → GitHub → Jenkins → docker build → docker push → Docker Hub
-                                                               ↓
-                                                   Server: docker pull & run
-                                                   (or Kubernetes pulls it)
+Developer's machine:         Production server:
+  Node.js 20                   Node.js 16
+  MongoDB 7                    MongoDB 4.4
+  npm 10                       npm 6
+  Ubuntu 22                    CentOS 7
+
+Result: App works in dev, crashes in production.
 ```
 
-**Prerequisites:** Module 01 done. Docker Desktop installed on Windows 11.
+Docker solves this by packaging the application **together with everything it needs** — runtime, dependencies, configuration — into a **container** that runs identically everywhere.
 
-**What you'll build:** A Node.js Express app → Dockerised → pushed to Docker Hub as `yourname/hello-express:1.0`.
+### Containers vs Virtual Machines
+
+```
+Virtual Machine:                    Container:
+┌─────────────────────┐            ┌─────────────────────┐
+│   App A             │            │   App A             │
+│   Libraries         │            │   Libraries         │
+│   Guest OS (2GB)    │            │   (No OS — 50MB)    │
+├─────────────────────┤            ├─────────────────────┤
+│   Hypervisor        │            │   Docker Engine     │
+├─────────────────────┤            ├─────────────────────┤
+│   Host OS           │            │   Host OS           │
+│   Hardware          │            │   Hardware          │
+└─────────────────────┘            └─────────────────────┘
+ Heavy, slow to start               Lightweight, starts in seconds
+ Full OS per VM                     Shares host OS kernel
+```
+
+### Key Concepts
+
+| Term | Meaning |
+|------|---------|
+| **Image** | A read-only blueprint — like a class in OOP |
+| **Container** | A running instance of an image — like an object |
+| **Dockerfile** | Instructions to build a custom image |
+| **Registry** | Storage for images (Docker Hub, ECR, ACR) |
+| **Docker Compose** | Tool to run multiple containers together |
 
 ---
 
-## Part 1 — Your First Container
+## 2.2 Installing Docker
 
-### Start with Git (Always)
+```bash
+# Ubuntu/Debian
+sudo apt-get update
+sudo apt-get install docker.io
+sudo systemctl start docker
+sudo systemctl enable docker
 
-```powershell
-mkdir hello-docker
-cd hello-docker
-git init
+# Add your user to docker group (avoid sudo every time)
+sudo usermod -aG docker $USER
+newgrp docker   # apply without logging out
+
+# Mac / Windows: install Docker Desktop from https://docker.com
+
+# Verify
+docker --version        # Docker version 26.x
+docker run hello-world  # runs a test container
 ```
 
-Create `.gitignore` **before writing any code**:
+---
 
+## 2.3 Docker Commands
+
+### Image Commands
+
+```bash
+# List images on your machine
+docker images
+docker image ls
+
+# Pull an image from Docker Hub (without running it)
+docker pull node:20-alpine
+docker pull mongo:7
+docker pull nginx:stable-alpine
+
+# Remove an image
+docker rmi node:20-alpine
+docker image rm node:20-alpine
+
+# Search Docker Hub
+docker search node
+
+# Show image details / layers
+docker inspect node:20-alpine
+docker history node:20-alpine
 ```
-node_modules/
-.env
-*.log
-dist/
+
+### Container Commands
+
+```bash
+# List running containers
+docker ps
+
+# List ALL containers (including stopped)
+docker ps -a
+
+# Stop a running container
+docker stop <container-id or name>
+
+# Start a stopped container
+docker start <container-id or name>
+
+# Remove a container (must be stopped first)
+docker rm <container-id or name>
+
+# Remove all stopped containers at once
+docker container prune
+
+# View container logs
+docker logs <container-id>
+docker logs -f <container-id>    # follow (live)
+docker logs --tail 50 <id>       # last 50 lines
+
+# Execute a command inside a running container
+docker exec -it <container-id> bash
+docker exec -it <container-id> sh    # if bash not available (Alpine)
+
+# Copy files between host and container
+docker cp localfile.txt <container-id>:/app/
+docker cp <container-id>:/app/output.txt ./
 ```
 
-Create `app.js`:
+### System Commands
 
-```js
-const http = require('http');
+```bash
+# Show disk usage
+docker system df
 
-const server = http.createServer((req, res) => {
-  res.end('Hello from inside Docker!');
-});
+# Remove all unused data (images, containers, networks, volumes)
+docker system prune
+docker system prune -a    # also removes unused images
 
-server.listen(3000, () => console.log('Server running on port 3000'));
+# Show Docker info
+docker info
+docker version
 ```
 
-### Write Your First Dockerfile
+---
 
-A `Dockerfile` is a recipe for building a Docker image — line by line:
+## 2.4 Docker Run
+
+`docker run` is the most important command. It pulls (if needed) and starts a container.
+
+```bash
+# Basic run — starts container, runs command, exits
+docker run ubuntu echo "Hello from Ubuntu"
+
+# Run interactively (-it = interactive + tty)
+docker run -it ubuntu bash
+# Now you're inside the container
+# exit to leave
+
+# Run in background / detached (-d)
+docker run -d nginx
+
+# Give the container a name
+docker run -d --name my-nginx nginx
+
+# Map ports: host:container
+docker run -d -p 8080:80 nginx
+# http://localhost:8080 → nginx inside container on port 80
+
+# Map multiple ports
+docker run -d -p 3000:3000 -p 9229:9229 node:20-alpine
+
+# Set environment variables
+docker run -d \
+  -e NODE_ENV=production \
+  -e MONGO_URI=mongodb://mongo:27017/ems \
+  -p 3000:3000 \
+  my-ems-api
+
+# Mount a volume: host_path:container_path
+docker run -d \
+  -v /home/alice/data:/data/db \
+  mongo:7
+
+# Automatically remove container when it exits (--rm)
+docker run --rm ubuntu echo "Clean up after me"
+
+# Limit resources
+docker run -d \
+  --memory="512m" \
+  --cpus="0.5" \
+  my-ems-api
+
+# Full example — run EMS API
+docker run -d \
+  --name ems-api \
+  -p 3000:3000 \
+  -e NODE_ENV=production \
+  -e MONGO_URI=mongodb://host.docker.internal:27017/ems \
+  --restart unless-stopped \
+  ibm-ems/api:latest
+```
+
+### `--restart` Policies
+
+| Policy | Behaviour |
+|--------|-----------|
+| `no` | Never restart (default) |
+| `always` | Always restart, even on Docker daemon restart |
+| `unless-stopped` | Restart unless manually stopped |
+| `on-failure` | Restart only on non-zero exit code |
+
+---
+
+## 2.5 Docker Images — Building Your Own
+
+### Dockerfile Basics
+
+A Dockerfile is a recipe for building a custom image.
 
 ```dockerfile
-FROM node:18-alpine
+# Each line = one layer in the image
+FROM node:20-alpine          # start from official Node.js image (Alpine = tiny Linux)
+
+WORKDIR /app                 # set working directory inside container
+
+COPY package*.json ./        # copy package files first (for layer caching)
+RUN npm ci                   # install dependencies
+
+COPY . .                     # copy rest of the source code
+
+EXPOSE 3000                  # document which port the app uses (doesn't actually open it)
+
+CMD ["node", "server.js"]    # command to run when container starts
+```
+
+### Dockerfile for EMS API
+
+```dockerfile
+# Dockerfile
+# ── Stage 1: Base ────────────────────────────────────────────────────────────
+FROM node:20-alpine AS base
+
+# Install dumb-init for proper signal handling inside containers
+RUN apk add --no-cache dumb-init
 
 WORKDIR /app
 
-COPY app.js .
+# Copy and install deps separately — cached if package.json unchanged
+COPY package*.json ./
+RUN npm ci --only=production
 
-CMD ["node", "app.js"]
+# ── Stage 2: Build ───────────────────────────────────────────────────────────
+FROM base AS production
+
+# Copy source code
+COPY . .
+
+# Create non-root user (security best practice)
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
+
+EXPOSE 3000
+
+# dumb-init handles signals correctly (e.g. Ctrl+C, SIGTERM from Kubernetes)
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "server.js"]
 ```
 
-| Line | What it does |
-|---|---|
-| `FROM node:18-alpine` | Start from an existing image that has Node 18. `alpine` = tiny Linux (~5MB base) |
-| `WORKDIR /app` | All following commands run inside `/app` in the container |
-| `COPY app.js .` | Copy your file from Windows into the image |
-| `CMD [...]` | Command to run when the container starts |
+### `.dockerignore`
 
-### Build and Run
-
-```powershell
-docker build -t hello-docker .
-docker run -p 3000:3000 hello-docker
-```
-
-Open `http://localhost:3000` → **Hello from inside Docker!**
-
-```powershell
-docker ps                          # see running containers
-docker stop <container-id>         # stop it
-```
-
-### The Mental Model
-
-```
-Your files        →   Image                   →   Container
-(app.js +             (Node runtime +              (Running process,
-Dockerfile)            your app, frozen)             isolated, alive)
-
-   Recipe             Cake mould (reusable)          Actual cake
-```
-
-- `docker build` → creates an **image** (like a Git commit — immutable snapshot)
-- `docker run` → creates and starts a **container** from the image
-
-### Commit the Dockerfile
-
-```powershell
-git add .
-git commit -m "Add Dockerfile for hello-docker"
-```
-
-The Dockerfile belongs in the repo. Anyone who clones it can build the identical image.
-
-**Quick knowledge check:**
-- Can you run `docker run` twice and get two independent servers? → Yes. Same image, two separate containers. That's how scaling works.
-- Can you change `app.js` and refresh the browser? → No. You must `docker build` again. The image is a frozen snapshot, not a live folder.
-- Where is Node.js installed on your laptop? → Inside the container. The runtime is bundled. Doesn't matter what's on your host.
-
----
-
-## Part 2 — Container Lifecycle
-
-A stopped container still exists — it's paused, not deleted.
-
-```powershell
-docker ps -a                    # all containers including stopped
-docker start <container-id>     # restart a stopped container
-docker start -a <container-id>  # restart and watch logs
-```
-
-| Command | Effect |
-|---|---|
-| `docker run` | Creates a **new** container and starts it |
-| `docker start` | Starts an **existing** stopped container |
-| `docker stop` | Stops a running container (still exists) |
-| `docker rm` | Permanently deletes the container |
-
-The lifecycle: `run → stop → start → stop → start → rm`
-
-`docker run` is only used **once** per container. After that, it's `start` and `stop`.
-
----
-
-## Part 3 — Express App + Image Layers
-
-### Upgrade the App
-
-Update `app.js`:
-
-```js
-const express = require('express');
-const app = express();
-
-app.get('/', (req, res) => {
-  res.send('Hello from Express inside Docker!');
-});
-
-app.listen(3000, () => console.log('Server running on port 3000'));
-```
-
-Create `package.json`:
-
-```json
-{
-  "name": "hello-docker",
-  "version": "1.0.0",
-  "main": "app.js",
-  "dependencies": {
-    "express": "4.18.2"
-  }
-}
-```
-
-### .dockerignore — Docker's .gitignore
-
-Create `.dockerignore` in the project root:
+Like `.gitignore` — prevents unnecessary files from being copied into the image.
 
 ```
 node_modules
+npm-debug.log
 .git
 .gitignore
-*.log
+*.md
 .env
+.env.local
+coverage/
+dist/
 ```
 
-Without this, `COPY . .` would copy your Windows-built `node_modules` into the Linux container — breaking the app and bloating the image. Always create `.dockerignore` alongside `.gitignore`.
+### Build the Image
 
-| File | Tells | What to exclude |
-|---|---|---|
-| `.gitignore` | Git | Don't track these |
-| `.dockerignore` | Docker | Don't include in build context |
-| Both should exclude | `node_modules`, `.env`, logs | Generated, OS-specific, or secret |
+```bash
+# Build the image
+# -t = tag (name:version)
+# . = build context (current directory)
+docker build -t ibm-ems/api:1.0.0 .
+docker build -t ibm-ems/api:latest .
 
-### Updated Dockerfile
+# Build with a specific Dockerfile
+docker build -f Dockerfile.prod -t ibm-ems/api:prod .
+
+# See the image
+docker images | grep ibm-ems
+```
+
+### Layer Caching — Why Order Matters
 
 ```dockerfile
-FROM node:18-alpine
+# ❌ Inefficient — copies source BEFORE installing deps
+# Every code change invalidates the npm ci layer
+COPY . .
+RUN npm ci
 
+# ✅ Efficient — copy package files first
+# npm ci only re-runs when package.json changes
+COPY package*.json ./
+RUN npm ci
+COPY . .
+```
+
+### Multi-Stage Builds
+
+Multi-stage builds reduce final image size by throwing away build tools.
+
+```dockerfile
+# Stage 1 — Install ALL dependencies (including devDependencies)
+FROM node:20-alpine AS builder
 WORKDIR /app
-
-COPY package.json .
-
-RUN npm install
-
+COPY package*.json ./
+RUN npm ci                  # includes devDependencies for building
 COPY . .
+RUN npm run build           # compile TypeScript, etc.
 
-CMD ["node", "app.js"]
+# Stage 2 — Only production dependencies + built output
+FROM node:20-alpine AS production
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production   # no devDependencies
+COPY --from=builder /app/dist ./dist   # copy compiled output from stage 1
+EXPOSE 3000
+CMD ["node", "dist/server.js"]
+
+# Result: final image has no TypeScript compiler, no test tools, etc.
+# Much smaller image.
 ```
 
-```powershell
-docker build -t hello-express .
-docker run -p 3000:3000 hello-express
-```
-
-### Image Layers and Caching
-
-Every Dockerfile instruction creates a **layer**. Docker caches unchanged layers. Run the build twice without changes:
-
-```
-=> CACHED [3/5] COPY package.json .
-=> CACHED [4/5] RUN npm install        ← from cache, zero time spent
-=> CACHED [5/5] COPY . .
-```
-
-Now change one word in `app.js` and rebuild:
-
-```
-=> CACHED [4/5] RUN npm install        ← still cached, package.json unchanged
-=> [5/5] COPY . .                      ← only this re-runs
-```
-
-**The caching rule:** Copy what changes least, first. `package.json` rarely changes. `app.js` changes constantly. Always put dependencies before source code.
-
-```dockerfile
-# ❌ BAD — every app.js change re-runs npm install (slow!)
-COPY . .
-RUN npm install
-
-# ✅ GOOD — npm install only re-runs when package.json changes
-COPY package.json .
-RUN npm install
-COPY . .
-```
-
-### Commit to Git
-
-```powershell
-git add .
-git commit -m "Add Express, package.json, .dockerignore"
-git push
+```bash
+# Compare sizes
+docker images ibm-ems/api
+# REPOSITORY    TAG         SIZE
+# ibm-ems/api   single     420MB   ← single stage
+# ibm-ems/api   multi      95MB    ← multi stage
 ```
 
 ---
 
-## Part 4 — Docker Engine, Storage & Networking
+## 2.6 Docker Compose
 
-### How Docker Actually Works on Windows 11
+Running the EMS API alone isn't useful — it needs MongoDB. Docker Compose lets you define and run **multi-container applications** with a single YAML file.
 
-```
-Docker CLI (the docker commands you type)
-      ↓  REST API
-Docker Daemon (dockerd — background service inside WSL2 VM)
-      ↓
-containerd → runc (what actually starts containers using Linux namespaces)
-```
-
-Docker Desktop runs a hidden WSL2 Linux VM on your Windows machine. The daemon lives inside that VM. Your PowerShell terminal talks to it over a named pipe.
-
-| Component | Role |
-|---|---|
-| **Docker CLI** | The `docker` command — sends requests to the daemon |
-| **Docker Daemon** | Background service managing everything |
-| **containerd** | Manages container lifecycle |
-| **runc** | Actually starts containers using Linux kernel features |
-
-### Storage: Volumes vs Bind Mounts
-
-**Volumes** — Docker-managed, recommended for production data:
-
-```powershell
-docker volume create mydata
-docker run -v mydata:/data hello-express
-
-docker volume ls
-docker volume inspect mydata
-docker volume rm mydata
-```
-
-**Bind Mounts** — Maps a folder from your Windows machine into the container. Great for development (edit a file, the container sees it instantly):
-
-```powershell
-docker run -p 3000:3000 -v ${PWD}:/app hello-express
-```
-
-| | Volume | Bind Mount |
-|---|---|---|
-| Storage location | Docker-managed (inside WSL2) | Your Windows folder |
-| Production-ready | ✅ | ❌ |
-| Dev live-reload | Slower | ✅ |
-| Survives `docker rm` | ✅ | ✅ (it's your files) |
-
-### Networking
-
-```powershell
-docker network ls                           # see existing networks
-docker network create my-network            # create a custom network
-
-# Containers on the same custom network can reach each other by name
-docker run -d --network my-network --name mongo mongo:6
-docker run -d --network my-network --name app -p 3000:3000 hello-express
-
-docker network inspect my-network
-```
-
-**Default Docker networks:**
-
-| Network | Description |
-|---|---|
-| `bridge` | Default. Containers get private IPs — communicate by IP, not name. |
-| `host` | Shares host network stack. Not available on Windows. |
-| `none` | Complete network isolation. |
-| Custom bridge | Like `bridge` but Docker provides DNS — containers talk **by name**. ✅ Use this. |
-
-Docker Compose always creates a custom bridge network automatically — which is why `mongo:27017` works as a hostname without any extra config.
-
----
-
-## Part 5 — Docker Compose: Running Multiple Containers
-
-One command to bring up your entire application stack.
-
-### Project Structure
-
-```
-hello-docker\
-  ├── app.js
-  ├── package.json
-  ├── Dockerfile
-  ├── .dockerignore
-  ├── .gitignore
-  └── docker-compose.yml
-```
-
-### Update `package.json`
-
-```json
-{
-  "name": "hello-docker",
-  "version": "1.0.0",
-  "main": "app.js",
-  "dependencies": {
-    "express": "4.18.2",
-    "mongoose": "7.6.3"
-  }
-}
-```
-
-### Update `app.js`
-
-```js
-const express = require('express');
-const mongoose = require('mongoose');
-
-const app = express();
-
-mongoose.connect('mongodb://mongo:27017/hellodb')
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB error:', err));
-
-app.get('/', (req, res) => {
-  const status = mongoose.connection.readyState === 1 ? 'Connected ✅' : 'Disconnected ❌';
-  res.send(`Hello from Express! MongoDB: ${status}`);
-});
-
-app.listen(3000, () => console.log('Server running on port 3000'));
-```
-
-The hostname `mongo` in the connection string is the **service name** in Compose. Docker's built-in DNS resolves it automatically.
-
-### `docker-compose.yml`
+### `docker-compose.yml` for EMS
 
 ```yaml
-version: '3'
+# docker-compose.yml
+version: '3.9'
 
 services:
 
-  app:
-    build: .
+  # ── MongoDB ────────────────────────────────────────────────────────────────
+  mongo:
+    image: mongo:7
+    container_name: ems-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: secret
+      MONGO_INITDB_DATABASE: ems
+    ports:
+      - "27017:27017"     # expose to host for debugging (optional in production)
+    volumes:
+      - mongo-data:/data/db    # persist data across container restarts
+
+  # ── Node.js API ────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .             # build from Dockerfile in current directory
+      dockerfile: Dockerfile
+    container_name: ems-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      MONGO_URI: mongodb://admin:secret@mongo:27017/ems?authSource=admin
+      JWT_SECRET: your-secret-key-here
     ports:
       - "3000:3000"
     depends_on:
-      - mongo
-    environment:
-      - NODE_ENV=production
-
-  mongo:
-    image: mongo:6
+      - mongo                # start mongo before api
     volumes:
-      - mongo-data:/data/db
+      - ./logs:/app/logs     # persist logs on host
 
+  # ── (Optional) Mongo Express — web UI for MongoDB ─────────────────────────
+  mongo-express:
+    image: mongo-express:latest
+    container_name: ems-mongo-ui
+    restart: unless-stopped
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: secret
+      ME_CONFIG_MONGODB_URL: mongodb://admin:secret@mongo:27017/
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mongo
+
+# ── Named volumes ─────────────────────────────────────────────────────────────
 volumes:
   mongo-data:
 ```
 
-### Compose Commands
+### Docker Compose Commands
 
-```powershell
-docker compose up -d                # start in background
-docker compose up --build -d        # rebuild image then start
-docker compose ps                   # service status
-docker compose logs                 # all logs
-docker compose logs -f app          # follow app logs live
-docker compose down                 # stop (keep data)
-docker compose down -v              # stop + delete volumes (wipes MongoDB)
+```bash
+# Start all services (builds images if needed)
+docker compose up
+
+# Start in background (detached)
+docker compose up -d
+
+# Build/rebuild images before starting
+docker compose up --build
+
+# Stop all services (containers remain)
+docker compose stop
+
+# Stop AND remove containers, networks
+docker compose down
+
+# Stop AND remove containers + volumes (deletes database data!)
+docker compose down -v
+
+# See running services
+docker compose ps
+
+# View logs for all services
+docker compose logs
+
+# View logs for a specific service
+docker compose logs api
+docker compose logs -f api    # follow
+
+# Execute command in a running service
+docker compose exec api sh
+docker compose exec mongo mongosh
+
+# Scale a service (run multiple instances)
+docker compose up -d --scale api=3
+
+# Run one-off commands
+docker compose run api npm test
 ```
 
-Open `http://localhost:3000` → **Hello from Express! MongoDB: Connected ✅**
-
-### Three Concepts Compose Teaches
-
-**1. Service name = hostname** — `mongo:27017` works because Compose puts both containers on a custom bridge network and registers DNS by service name.
-
-**2. Automatic private network** — No manual `docker network create`. Compose does it. The outside world can only reach what you explicitly map with `ports:`.
-
-**3. Volumes = persistence** — The `mongo-data` volume outlives containers. `docker compose down` then `up` — your data is still there. `down -v` wipes it.
-
-### Commit
-
-```powershell
-git add .
-git commit -m "Add docker-compose with MongoDB"
-git push
-```
-
----
-
-## Part 6 — Docker Registry (Docker Hub)
-
-### Why a Registry?
-
-```
-Git flow:    code → git push → GitHub     → team clones
-Docker flow: image → docker push → Docker Hub → servers pull
-```
-
-Both GitHub and Docker Hub serve the same purpose for their domain.
-
-### Login and Push
-
-```powershell
-docker login
-
-docker tag hello-express yourname/hello-express:1.0
-docker push yourname/hello-express:1.0
-```
-
-### Pull and Run From Anywhere
-
-```powershell
-# No source code, no Node install needed — just Docker
-docker pull yourname/hello-express:1.0
-docker run -p 3000:3000 yourname/hello-express:1.0
-```
-
-This is the deployment model. The server never sees your source code.
-
-### Use the Registry Image in Compose
+### Development vs Production Compose
 
 ```yaml
+# docker-compose.dev.yml — for local development
 services:
-  app:
-    image: yourname/hello-express:1.0    # pull from Docker Hub instead of building
-    ports:
-      - "3000:3000"
-    depends_on:
-      - mongo
+  api:
+    build:
+      context: .
+      target: development        # use a development stage in multi-stage Dockerfile
+    volumes:
+      - .:/app                   # mount source code — changes reflect instantly
+      - /app/node_modules        # don't overwrite node_modules from container
+    environment:
+      NODE_ENV: development
+    command: npm run dev         # use nodemon for hot reload
+```
+
+```bash
+# Use a specific compose file
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 ```
 
 ---
 
-## Part 7 — Images Deep Dive
+## 2.7 Docker Registry
 
-```powershell
-docker history hello-express        # see all layers + sizes
-docker inspect hello-express        # full metadata as JSON
-docker image prune                  # remove dangling (untagged) images
-docker image prune -a               # remove all unused images
+A registry stores and distributes Docker images. Docker Hub is the default public registry.
+
+### Docker Hub
+
+```bash
+# Login to Docker Hub
+docker login
+
+# Tag your image with your Docker Hub username
+docker tag ibm-ems/api:1.0.0 yourusername/ibm-ems-api:1.0.0
+docker tag ibm-ems/api:1.0.0 yourusername/ibm-ems-api:latest
+
+# Push to Docker Hub
+docker push yourusername/ibm-ems-api:1.0.0
+docker push yourusername/ibm-ems-api:latest
+
+# Pull from Docker Hub (on another machine)
+docker pull yourusername/ibm-ems-api:latest
+docker run -p 3000:3000 yourusername/ibm-ems-api:latest
 ```
 
-### Multi-Stage Builds (Lean Production Images)
+### Private Registry
 
-```dockerfile
-# Stage 1 — install everything including dev tools
-FROM node:18-alpine AS builder
-WORKDIR /app
-COPY package.json .
-RUN npm install --production
+```bash
+# Run your own registry
+docker run -d -p 5000:5000 --name registry registry:2
 
-# Stage 2 — lean runtime image, only copies what's needed
-FROM node:18-alpine
-WORKDIR /app
-COPY --from=builder /app/node_modules ./node_modules
-COPY app.js .
-CMD ["node", "app.js"]
+# Tag for private registry
+docker tag ibm-ems/api:1.0.0 localhost:5000/ibm-ems-api:1.0.0
+
+# Push to private registry
+docker push localhost:5000/ibm-ems-api:1.0.0
+
+# Pull from private registry
+docker pull localhost:5000/ibm-ems-api:1.0.0
 ```
 
-The final image has no build tools, no npm cache, no dev dependencies — only the runtime code.
+### Image Tagging Strategy
 
-### Base Image Comparison
+```bash
+# Semantic versioning — best practice
+docker tag ibm-ems/api:1.0.0      registry/ibm-ems-api:1.0.0
+docker tag ibm-ems/api:1.0.0      registry/ibm-ems-api:1.0        # minor
+docker tag ibm-ems/api:1.0.0      registry/ibm-ems-api:1           # major
+docker tag ibm-ems/api:1.0.0      registry/ibm-ems-api:latest      # latest
 
-| Base image | Approx. size | Notes |
-|---|---|---|
-| `node:18` | ~950MB | Full Debian — max compatibility |
-| `node:18-slim` | ~200MB | Debian, fewer packages |
-| `node:18-alpine` | ~50MB | ✅ Recommended — Alpine Linux |
-
----
-
-## Part 8 — Container Orchestration: Docker Swarm & Kubernetes
-
-### The Scaling Problem
-
-Docker Compose runs on **one machine**. When you need more:
-- One machine has limits
-- If it crashes, everything crashes
-- Updates require downtime
-
-**Orchestration** distributes containers across a **cluster** of machines, restarts failed ones, and handles updates with zero downtime.
-
-### Docker Swarm
-
-Swarm is Docker's built-in clustering system — zero extra install needed:
-
-```powershell
-# Turn this machine into a Swarm manager
-docker swarm init
-
-# Deploy a multi-service stack
-docker stack deploy -c docker-compose.yml hello-stack
-
-# Scale to 5 replicas
-docker service scale hello-stack_app=5
-
-# See running containers across all nodes
-docker service ps hello-stack_app
-
-# Tear it all down
-docker stack rm hello-stack
-docker swarm leave --force
-```
-
-**Core Swarm concepts:**
-
-| Concept | Meaning |
-|---|---|
-| **Swarm** | A cluster of Docker hosts managed as one unit |
-| **Manager node** | Schedules work, maintains desired state |
-| **Worker node** | Runs containers assigned by the manager |
-| **Service** | "Run N replicas of this image" — the Swarm unit |
-| **Task** | One running container instance of a service |
-
-### Swarm vs Kubernetes
-
-| Feature | Docker Swarm | Kubernetes |
-|---|---|---|
-| Setup | Built-in, simple | Separate install, complex |
-| Learning curve | Low | Steep |
-| Features | Basic orchestration | Full platform (autoscaling, RBAC, more) |
-| Industry adoption | Shrinking | Dominant standard |
-| CLI | `docker stack`, `docker service` | `kubectl` |
-
-Swarm covers the Docker curriculum. Kubernetes is the industry standard and gets a full module next.
-
-### The Orchestration Progression
-
-```
-Docker Compose    →   Docker Swarm     →   Kubernetes
-(one machine,         (multi-machine,       (multi-machine,
-development)          simple)               full production platform)
-
-Same image works in all three. The orchestration layer changes, the container doesn't.
+# Git commit SHA — traceability
+docker tag ibm-ems/api registry/ibm-ems-api:$(git rev-parse --short HEAD)
+# registry/ibm-ems-api:a1b2c3d
 ```
 
 ---
 
-## Quick Reference
+## 2.8 Docker Engine, Storage, and Networking
 
-### All Docker Commands
+### Storage: Volumes vs Bind Mounts
 
-```powershell
-# Images
-docker images
-docker pull mongo:6
-docker tag hello-express yourname/hello-express:1.0
-docker push yourname/hello-express:1.0
-docker rmi hello-express
-docker history hello-express
-docker image prune
+```bash
+# Named Volume — managed by Docker, stored in Docker's area
+# Best for: database data, persistent app data
+docker volume create ems-data
+docker run -v ems-data:/data/db mongo:7
 
-# Containers
-docker ps
-docker ps -a
-docker run -p 3000:3000 <image>
-docker run -d -p 3000:3000 <image>
-docker start <id>
-docker stop <id>
-docker rm <id>
-docker logs <id>
-docker logs -f <id>
-docker exec -it <id> sh
+# Bind Mount — maps a host directory into the container
+# Best for: development (live code reload)
+docker run -v $(pwd):/app node:20-alpine
 
-# Volumes & Networks
-docker volume ls / create / rm
-docker network ls / create / inspect
+# tmpfs Mount — in-memory, not persisted
+# Best for: sensitive temporary data
+docker run --tmpfs /tmp node:20-alpine
 
-# Compose
-docker compose up -d
+# Volume commands
+docker volume ls
+docker volume inspect ems-data
+docker volume rm ems-data
+docker volume prune      # remove all unused volumes
+```
+
+### Networking
+
+Containers on the same Docker network can reach each other by **container name** (not IP).
+
+```bash
+# List networks
+docker network ls
+
+# Create a custom network
+docker network create ems-network
+
+# Connect containers to the network
+docker run -d --name mongo    --network ems-network mongo:7
+docker run -d --name ems-api  --network ems-network \
+  -e MONGO_URI=mongodb://mongo:27017/ems \
+  ibm-ems/api:latest
+# 'mongo' in the URI resolves to the mongo container's IP — no hardcoding!
+
+# Inspect a network
+docker network inspect ems-network
+```
+
+**Default networks:**
+
+| Network | Description |
+|---------|-------------|
+| `bridge` | Default. Containers can talk to each other and internet |
+| `host` | Container shares host's network stack (no port mapping needed) |
+| `none` | No networking |
+| Custom bridge | Like `bridge` but with automatic DNS (use this!) |
+
+> In Docker Compose, all services are automatically on the same custom bridge network — that's why the API can reach `mongo` by name without extra configuration.
+
+---
+
+## 2.9 Container Orchestration — Intro to Swarm
+
+When you need to run multiple containers across multiple servers, you need **orchestration**.
+
+### Docker Swarm — Built-in Orchestration
+
+```bash
+# Initialise Swarm on the manager node
+docker swarm init --advertise-addr <manager-ip>
+# Prints a join command for worker nodes
+
+# On worker nodes:
+docker swarm join --token <token> <manager-ip>:2377
+
+# Deploy a stack (like docker compose, but for Swarm)
+docker stack deploy -c docker-compose.yml ems-stack
+
+# See running services
+docker service ls
+docker service ps ems-stack_api
+
+# Scale a service
+docker service scale ems-stack_api=3
+
+# Update image (rolling update — zero downtime)
+docker service update --image ibm-ems/api:1.1.0 ems-stack_api
+
+# Remove the stack
+docker stack rm ems-stack
+```
+
+> **Swarm vs Kubernetes:** Swarm is simpler but less powerful. For production-scale orchestration, Kubernetes (Module 03) is the industry standard.
+
+---
+
+## 2.10 EMS Project — Dockerised Setup
+
+```bash
+# Project structure
+ibm-ems-api/
+├── src/
+├── Dockerfile
+├── .dockerignore
+├── docker-compose.yml
+├── docker-compose.dev.yml
+└── package.json
+
+# Build and run everything
 docker compose up --build -d
+
+# Check it's working
+curl http://localhost:3000/api/health
+# {"status":"ok","timestamp":"...","db":"connected"}
+
+# Stop everything
 docker compose down
-docker compose down -v
-docker compose ps
-docker compose logs -f app
-
-# Swarm
-docker swarm init
-docker stack deploy -c file.yml mystack
-docker service scale mystack_app=5
-docker stack rm mystack
-docker swarm leave --force
-
-# Cleanup
-docker system prune
-docker system prune -a
 ```
-
-### Key Distinctions
-
-| These seem similar... | But they're different because... |
-|---|---|
-| `docker run` vs `docker start` | `run` creates a new container. `start` restarts an existing stopped one. |
-| Image vs Container | Image = frozen blueprint. Container = live running instance. |
-| `docker stop` vs `docker rm` | `stop` pauses (still exists). `rm` deletes permanently. |
-| Volume vs Bind mount | Volume = Docker-managed, portable. Bind mount = your Windows folder, dev-only. |
-| `RUN` vs `CMD` in Dockerfile | `RUN` executes at build time. `CMD` executes at container start. |
-| `COPY` vs `ADD` | `COPY` copies files. `ADD` can also extract archives. Default to `COPY`. |
-| Swarm vs Kubernetes | Swarm = simple built-in. Kubernetes = powerful industry standard. |
 
 ---
 
-> **Next → 03 YAML** — Kubernetes is configured almost entirely in YAML. Before diving in, the next (short) module covers YAML syntax, indentation rules, and common mistakes. Reading it once saves hours of debugging YAML-related errors in Kubernetes.
+## Summary
+
+| Concept | Key Command |
+|---------|------------|
+| Run a container | `docker run -d -p 3000:3000 myimage` |
+| Build an image | `docker build -t myimage:tag .` |
+| List containers | `docker ps` / `docker ps -a` |
+| View logs | `docker logs -f <container>` |
+| Shell into container | `docker exec -it <container> sh` |
+| Start all services | `docker compose up -d` |
+| Stop all services | `docker compose down` |
+| Push image | `docker push registry/image:tag` |
+| Create volume | `docker volume create name` |
+| Create network | `docker network create name` |
+
+**Next → Module 03: Kubernetes**
