@@ -26,6 +26,9 @@ By the end of this lab, every trainee will have personally:
 - [ ] Pushed a branch and opened a Pull Request
 - [ ] Reviewed a teammate's PR (commented, requested changes, approved)
 - [ ] Hit a real merge conflict and resolved it correctly
+- [ ] Rebased a feature branch onto an updated `main`, resolved a rebase
+      conflict, squashed commits with interactive rebase, and force-pushed
+      safely with `--force-with-lease`
 - [ ] Opened a PR from a fork to an upstream repository
 - [ ] Synced their fork with upstream after other teams merged
 - [ ] Explained the difference between Git Flow and GitHub Flow
@@ -480,6 +483,91 @@ call here.
 
 ---
 
+## Exercise 7.5 — Rebase Lab: Clean Up Before You Ship (20 min)
+
+**Concepts:** `git rebase`, replaying commits, linear history vs merge
+commits, interactive rebase (`squash`), the "never rebase shared commits"
+rule
+
+So far every sync you've done (`merge origin/main`, `fetch` + `merge
+upstream/main`) has left a merge commit behind. Rebase does the same
+job — bring your branch up to date — but rewrites your commits to sit
+**on top of** the latest `main` instead, so the history reads as one
+straight line instead of two branches tied together.
+
+1. Make sure your feature branch is a few commits behind `main` (it
+   should be, after Exercise 7's merges landed):
+   ```bash
+   git checkout feature/<entity>-<layer>
+   git fetch origin
+   git log --oneline origin/main..HEAD      # your commits not yet on main
+   git log --oneline HEAD..origin/main      # main's commits you don't have
+   ```
+
+2. Instead of merging, rebase your branch onto the updated `main`:
+   ```bash
+   git rebase origin/main
+   ```
+   Git detaches your commits, fast-forwards your branch to `origin/main`,
+   then replays your commits one at a time on top.
+
+3. If you touched `changelogs/<entity>-CHANGELOG.md` again, you'll likely
+   see the same conflict shape as Exercise 7 — but the workflow differs:
+   ```
+   <<<<<<< HEAD (main's version, since rebase reverses the usual sides)
+   - [Arjun] — Added a new field note
+   =======
+   - [Priya] — Another update from feature branch
+   >>>>>>> Your commit message
+   ```
+   Resolve it in the file, then instead of `git commit`, use:
+   ```bash
+   git add changelogs/<entity>-CHANGELOG.md
+   git rebase --continue
+   ```
+   Repeat for each commit that conflicts. If it all goes wrong, bail out
+   cleanly with:
+   ```bash
+   git rebase --abort
+   ```
+
+4. Compare the two histories side by side:
+   ```bash
+   git log --oneline --graph feature/<entity>-<layer>   # straight line now
+   git log --oneline --graph main                        # has the merge commits from Exercise 7
+   ```
+
+5. **Interactive rebase — tidy your commits before opening a PR.** Squash
+   your last 3 commits on this branch into one clean commit:
+   ```bash
+   git rebase -i HEAD~3
+   ```
+   In the editor, leave the first commit as `pick` and change the other
+   two to `squash` (or `s`), save, then write one clear combined commit
+   message when prompted.
+
+6. Push your rewritten branch. Since the commit hashes changed, a normal
+   push will be rejected — you need a **force push**, but scoped safely:
+   ```bash
+   git push --force-with-lease origin feature/<entity>-<layer>
+   ```
+   `--force-with-lease` refuses to overwrite the remote branch if someone
+   else pushed to it since you last fetched — always prefer it over plain
+   `--force`.
+
+**Checkpoint:** each trainee can show a `git log --oneline --graph` with
+zero merge commits on their feature branch, and explain in one sentence
+why they used `--force-with-lease` instead of `--force`.
+
+> ⚠️ **Golden rule:** only rebase branches that are still local/yours,
+> like the `feature/<entity>-<layer>` branch you alone are working on.
+> **Never** rebase (or force-push) `main` or any branch your teammates
+> have already pulled — it rewrites commit hashes and breaks everyone
+> else's history. Rebase is a *before-you-share* tool; merge is the
+> *shared-history* tool.
+
+---
+
 ## Exercise 8 — Ship It: PR to Upstream (15 min)
 
 **Concepts:** fork → upstream contribution workflow, protected branches
@@ -608,6 +696,18 @@ This is exactly why the Oops Lab has you practice it on a disposable
 `scratch.txt` and a throwaway branch first. In real work, `git stash` or
 `git revert` are almost always the safer move.
 
+**"My `git push` was rejected after I rebased, even with `--force`."**
+That's `--force-with-lease` doing its job — it means someone else pushed
+new commits to that branch after you last fetched. Run `git fetch` first,
+re-check `git log --oneline --graph`, and only force-push once you're sure
+you're not erasing a teammate's work.
+
+**"Should I merge or rebase to update my branch?"**
+Rule of thumb from this lab: rebase your own private `feature/*` branch
+before opening a PR (Exercise 7.5) to keep history clean; merge when
+bringing shared/public history together, like syncing your fork in
+Exercise 9. Never rebase a branch other people have already pulled.
+
 ---
 
 ## Command Reference (this lab)
@@ -629,9 +729,14 @@ This is exactly why the Oops Lab has you practice it on a disposable
 | `git reset --soft/--mixed/--hard <hash>` | Rewind history (increasing severity) |
 | `git push origin <branch>` | Upload your branch |
 | `git fetch upstream` / `git merge upstream/main` | Sync fork with the original repo |
+| `git rebase origin/main` | Replay your commits on top of the latest main (linear history) |
+| `git rebase --continue` / `--abort` | Resolve or bail out of a rebase in progress |
+| `git rebase -i HEAD~N` | Interactively edit/squash the last N commits |
+| `git push --force-with-lease origin <branch>` | Safely push a rebased branch |
 
 ---
 
-**This lab covers every concept in Module 01, plus tags and branch
-protection as stretch goals.** If your team finishes early, help another
-team debug their conflict — that's real collaboration too.
+**This lab covers every concept in Module 01, plus rebase and interactive
+rebase (Exercise 7.5), and tags and branch protection as stretch goals.**
+If your team finishes early, help another team debug their conflict —
+that's real collaboration too.
