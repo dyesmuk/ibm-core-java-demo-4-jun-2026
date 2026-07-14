@@ -250,7 +250,7 @@ one didn't, using the words "container filesystem" and "named volume."
 
 ---
 
-## Exercise 5 — Custom Networks (15 min)
+## Exercise 5 — Custom Networks (15 min) IGNORE FOR NOW
 
 **Concepts:** user-defined bridge networks, container DNS
 
@@ -293,7 +293,7 @@ docker network rm ems-demo-net
 
 ---
 
-## Exercise 6 — Compose: Build Your Own Full Stack (35 min)
+## Exercise 6 — Compose: Build Your Own Full Stack (35 min) IGNORE FOR NOW
 
 **Concepts:** `docker-compose.yml`, service dependencies
 
@@ -318,7 +318,7 @@ Dockerfile and nginx.conf correctly.
 
 ---
 
-## Exercise 7 — Full Stack Test (15 min)
+## Exercise 7 — Full Stack Test (15 min) IGNORE FOR NOW
 
 **Concepts:** `docker compose up`, service dependency order
 
