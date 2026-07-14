@@ -5,7 +5,7 @@ Companion practical to the **Docker** module. Same EMS codebase from the
 Git & GitHub lab — but this time, no teams. Every trainee containerizes
 the **whole app** themselves, solo, end to end.
 
-> **Starter kit:** `ibm-ems-docker-starter.zip` — the merged EMS app plus
+> **Starter kit:** `https://github.com/dyesmuk/ibm-docker-demo-4-jun-2026/tree/main/ibm-ems-docker` — the merged EMS app plus
 > a `docker/` folder with fill-in-the-blank `Dockerfile`, `docker-compose.yml`,
 > and `nginx.conf` starters.
 
